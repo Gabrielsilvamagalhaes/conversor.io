@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter, Geist } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -30,7 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="pt-BR"
-      className={cn("h-full", "antialiased", fraunces.variable, inter.variable, "font-sans", geist.variable)}
+      className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
