@@ -16,7 +16,11 @@ function bytes(text: string): Uint8Array {
 describe("ValidateUploadUseCase", () => {
   it("aceita um csv de texto válido", () => {
     const useCase = new ValidateUploadUseCase(textDetector);
-    const result = useCase.execute({ fileName: "dados.csv", size: 12, bytes: bytes("a,b,c\n1,2,3") });
+    const result = useCase.execute({
+      fileName: "dados.csv",
+      size: 12,
+      bytes: bytes("a,b,c\n1,2,3"),
+    });
     expect(result.accepted).toBe(true);
     expect(result.extension).toBe("csv");
     expect(result.fileName).toBe("dados.csv");
