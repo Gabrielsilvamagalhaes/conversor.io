@@ -19,8 +19,13 @@ const SIGNATURES: readonly Signature[] = [
   { name: "jpg", magic: [0xff, 0xd8, 0xff] },
 ];
 
+/** Null-byte scan is limited to the first 512 bytes; magic signatures are always at offset 0. Content beyond this limit is not inspected. */
 const SCAN_LIMIT = 512;
 
+/**
+ * Detecta o tipo real de um arquivo a partir dos primeiros bytes (não confia na extensão).
+ * Heurística: detecção de byte NUL limitada aos primeiros 512 bytes.
+ */
 export class MagicBytesDetector implements FileTypeDetectorPort {
   detect(bytes: Uint8Array): FileTypeDetection {
     const signature = this.matchSignature(bytes);

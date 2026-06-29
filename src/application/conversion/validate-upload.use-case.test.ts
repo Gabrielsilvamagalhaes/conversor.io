@@ -54,4 +54,11 @@ describe("ValidateUploadUseCase", () => {
       "inválido",
     );
   });
+
+  it("rejeita arquivo sem extensão", () => {
+    const useCase = new ValidateUploadUseCase(textDetector);
+    expect(() => useCase.execute({ fileName: "nodotfile", size: 4, bytes: bytes("abcd") })).toThrow(
+      "inválido",
+    );
+  });
 });

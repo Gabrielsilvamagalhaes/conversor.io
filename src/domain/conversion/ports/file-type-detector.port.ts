@@ -1,3 +1,4 @@
+/** Invariante: isBinary é true sempre que signature for não-nulo. */
 export interface FileTypeDetection {
   /** true quando o conteúdo parece binário (ex.: contém byte NUL). */
   readonly isBinary: boolean;

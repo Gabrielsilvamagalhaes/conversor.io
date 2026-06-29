@@ -9,6 +9,7 @@ import { MagicBytesDetector } from "@/infrastructure/conversion/magic-bytes-dete
 /**
  * Composition root: instancia os adapters de infraestrutura e injeta nos use cases.
  * Route handlers e Server Components devem consumir os use cases somente daqui.
+ * É o único lugar que conhece as implementações concretas.
  */
 export interface Container {
   readonly createSession: CreateSessionUseCase;

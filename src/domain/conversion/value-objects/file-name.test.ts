@@ -18,7 +18,7 @@ describe("FileName", () => {
   });
 
   it("rejeita nome vazio", () => {
-    expect(() => FileName.create("   ")).toThrow();
+    expect(() => FileName.create("   ")).toThrow("Nome de arquivo inválido.");
   });
 
   it("extensão vazia quando não há ponto", () => {

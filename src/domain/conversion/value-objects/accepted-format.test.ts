@@ -11,7 +11,7 @@ describe("accepted-format", () => {
     expect(isAcceptedExtension("xlsx")).toBe(false);
   });
 
-  it("expõe a allowlist como readonly", () => {
+  it("ACCEPTED_EXTENSIONS contém csv", () => {
     expect(ACCEPTED_EXTENSIONS).toContain("csv");
   });
 });
