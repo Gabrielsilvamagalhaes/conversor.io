@@ -4,6 +4,10 @@ Guia para agentes de IA trabalhando neste repositório. Documentação completa 
 (espelho do vault Obsidian **Projeto Com Hans**). Em caso de dúvida sobre domínio ou
 arquitetura, consulte `/docs` antes de codar.
 
+> **Idioma:** responda **sempre em português (pt-BR)** nas interações com o usuário.
+> Código, nomes de identificadores e mensagens de commit seguem o padrão em inglês definido
+> nas convenções abaixo.
+
 ## Produto
 
 **conversor.io** — site conversor de arquivos full-stack. Aceita upload, converte no servidor
