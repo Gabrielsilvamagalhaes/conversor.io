@@ -24,6 +24,20 @@ e entrega download. MVP (v0.1): 5 formatos de documento/dados + vídeo → áudi
 | Branches | Conventional Branches (trunk-based em `main`) |
 | Deploy | Vercel · CI via GitHub Actions |
 
+## Design — Codex de Da Vinci
+
+Identidade visual "Renascença digital": arte de **Leonardo da Vinci** (domínio público,
+Wikimedia) como peça central, à maneira do Hermes/Nous. Mote de marca: **"Codex de Da Vinci"**
+(e "do códice ao código").
+
+- **Tipografia:** `Fraunces` (display) + `Inter` (UI/corpo), via `next/font/google`.
+- **Tokens** (CSS vars em `globals.css`, claro + `.dark`): `--bg`, `--bg-elev`, `--fg`,
+  `--muted`, `--sanguine` (acento), `--gold` (acento raro), `--line`. Tema padrão segue o
+  sistema (`prefers-color-scheme`) com toggle manual persistido em `localStorage`.
+- **UI kit:** shadcn/ui (base neutral) com os tokens acima mapeados.
+- **Arte:** `public/art/` (originais de domínio público); creditar autor/obra/fonte no rodapé.
+- **Princípio:** restrição; a ousadia mora na arte. Evitar o clichê creme+serifa+terracota.
+
 ## Escopo MVP
 
 | Categoria | Pares |
