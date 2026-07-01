@@ -17,7 +17,7 @@ export function SiteFooter() {
         </div>
 
         <nav aria-label="Formatos">
-          <p className="text-xs uppercase tracking-widest text-gold">Formatos</p>
+          <h2 className="text-xs uppercase tracking-widest text-gold">Formatos</h2>
           <ul className="mt-3 space-y-1.5 text-sm text-muted">
             {FORMATS.map((f) => (
               <li key={f}>{f}</li>
@@ -26,7 +26,7 @@ export function SiteFooter() {
         </nav>
 
         <nav aria-label="Produto">
-          <p className="text-xs uppercase tracking-widest text-gold">Produto</p>
+          <h2 className="text-xs uppercase tracking-widest text-gold">Produto</h2>
           <ul className="mt-3 space-y-1.5 text-sm">
             <li>
               <Link href="/app" className="text-muted hover:text-fg">
@@ -42,7 +42,7 @@ export function SiteFooter() {
         </nav>
 
         <div>
-          <p className="text-xs uppercase tracking-widest text-gold">Contato</p>
+          <h2 className="text-xs uppercase tracking-widest text-gold">Contato</h2>
           <ul className="mt-3 space-y-1.5 text-sm">
             <li>
               <a href="mailto:gabiles278@gmail.com" className="text-muted hover:text-fg">
@@ -52,6 +52,8 @@ export function SiteFooter() {
             <li>
               <a
                 href="https://github.com/Gabrielsilvamagalhaes"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-muted hover:text-fg"
               >
                 github.com/Gabrielsilvamagalhaes

@@ -83,6 +83,7 @@ function LoginForm() {
             <input
               type="email"
               required
+              aria-label="E-mail"
               placeholder="mestre@exemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -92,6 +93,7 @@ function LoginForm() {
               type="password"
               required
               minLength={6}
+              aria-label="Senha"
               placeholder="Senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
