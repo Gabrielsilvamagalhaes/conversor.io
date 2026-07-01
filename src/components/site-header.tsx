@@ -10,7 +10,7 @@ export function SiteHeader() {
       </Link>
       <nav className="flex items-center gap-5 text-sm text-muted">
         <Link href="/app" className="hidden hover:text-fg sm:inline">
-          Formatos
+          Converter
         </Link>
         <ThemeToggle />
         <Link
