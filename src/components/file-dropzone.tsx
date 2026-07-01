@@ -23,14 +23,19 @@ export function FileDropzone() {
     setResult(null);
     const body = new FormData();
     body.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body });
-    const data: UploadResult = await res.json();
-    if (res.ok) {
-      setStatus("accepted");
-      setResult(data);
-    } else {
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const data: UploadResult = await res.json();
+      if (res.ok) {
+        setStatus("accepted");
+        setResult(data);
+      } else {
+        setStatus("rejected");
+        setResult(data);
+      }
+    } catch {
       setStatus("rejected");
-      setResult(data);
+      setResult({ error: "Erro de rede. Tente novamente." });
     }
   }
 
@@ -49,7 +54,10 @@ export function FileDropzone() {
           e.preventDefault();
           setDragging(true);
         }}
-        onDragLeave={() => setDragging(false)}
+        onDragLeave={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setDragging(false);
+        }}
         onDrop={onDrop}
         className={`rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
           dragging ? "border-sanguine bg-sanguine/5" : "border-line"
@@ -70,6 +78,7 @@ export function FileDropzone() {
           ref={inputRef}
           type="file"
           accept=".csv"
+          aria-label="Selecionar arquivo CSV"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
