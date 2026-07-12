@@ -1,65 +1,74 @@
 import Image from "next/image";
+import Link from "next/link";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+import { Typewriter } from "@/components/typewriter";
+
+const PHRASES = ["um mestre.", "Da Vinci.", "do Renascimento.", "um relojoeiro."];
+const FORMATS = ["xlsx ↔ csv", "docx → pdf", "pdf → txt", "json ↔ csv", "vídeo → áudio"];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <div className="flex flex-1 flex-col">
+      <SiteHeader />
+
+      <main className="flex-1">
+        <section className="mx-auto grid max-w-6xl items-center gap-8 px-6 py-12 md:grid-cols-2 md:py-20">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-gold before:inline-block before:h-px before:w-7 before:bg-gold">
+              Renascença digital
+            </span>
+            <h1 className="mt-5 font-display text-4xl leading-[1.04] tracking-tight md:text-5xl">
+              Converta arquivos com a precisão de{" "}
+              <Typewriter words={PHRASES} className="italic text-sanguine" />
+            </h1>
+            <p className="mt-6 max-w-md text-lg leading-relaxed text-muted">
+              Upload, transmutação no servidor, download. Planilhas, documentos, dados e mídia — em
+              segundos, sem fricção.
+            </p>
+            <div className="mt-8 flex gap-3">
+              <Link
+                href="/app"
+                className="rounded-full bg-fg px-6 py-3 text-sm font-medium text-bg transition-opacity hover:opacity-90"
+              >
+                Começar a converter
+              </Link>
+              <Link
+                href="/login"
+                className="rounded-full border border-line px-6 py-3 text-sm font-medium hover:bg-bg-elev"
+              >
+                Entrar
+              </Link>
+            </div>
+            <div className="mt-10 flex flex-wrap gap-2">
+              {FORMATS.map((f) => (
+                <span key={f} className="rounded border border-line px-2.5 py-1 text-xs text-muted">
+                  {f}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-bg-elev md:aspect-auto md:h-[34rem]">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src="/art/vitruvian.jpg"
+              alt="Homem Vitruviano de Leonardo da Vinci"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover object-[50%_16%]"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg/70 via-transparent to-transparent" />
+            <p className="absolute bottom-3 right-3 text-right text-[0.65rem] leading-tight text-muted">
+              <span className="font-display text-fg">Homo Vitruvianus</span>
+              <br />
+              Leonardo da Vinci · c. 1490
+            </p>
+          </div>
+        </section>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

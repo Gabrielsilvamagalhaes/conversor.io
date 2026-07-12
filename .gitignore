@@ -32,9 +32,21 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# superpowers visual companion (brainstorm mockups)
+.superpowers/
+
+# local Claude Code settings (machine-specific)
+.claude/settings.local.json
+
+# playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
 
 # typescript
 *.tsbuildinfo

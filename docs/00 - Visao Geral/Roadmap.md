@@ -4,8 +4,8 @@ Cronograma macro alinhado à [[Progressão Mensal]] e à visão em [[Visão do P
 
 ## Fase 0 — Fundação (Semanas 1–2)
 
-- [ ] Repositório Git + [[Conventional Commits]]
-- [ ] Scaffold Next.js 16 conforme [[Estrutura de Pastas]]
+- [x] Repositório Git + [[Conventional Commits]]
+- [x] Scaffold Next.js 16 conforme [[Estrutura de Pastas]]
 - [ ] Firebase Auth + middleware de sessão — [[Firebase Auth]]
 - [ ] Pipeline [[GitHub Actions]] (lint, typecheck, build)
 - [ ] UI: upload, seleção de conversão, download
@@ -36,10 +36,13 @@ Cronograma macro alinhado à [[Progressão Mensal]] e à visão em [[Visão do P
 
 ## Releases sugeridas
 
-| Versão | Foco | Conversões novas |
-| --- | --- | --- |
-| v0.1.0 | MVP | xlsx, csv, pdf, docx, json + vídeo→áudio |
-| v0.2.0 | Mês 2 | pptx, txt, imagens |
-| v0.3.0 | Mês 3 | compressão, odt, markdown |
-| v0.4.0 | Mês 4 | áudio→texto (stub IA) |
-| v1.0.0 | IA | transcrição completa de vídeo |
+
+| Versão | Foco  | Conversões novas                         |
+| ------ | ----- | ---------------------------------------- |
+| v0.1.0 | MVP   | xlsx, csv, pdf, docx, json + vídeo→áudio |
+| v0.2.0 | Mês 2 | pptx, txt, imagens                       |
+| v0.3.0 | Mês 3 | compressão, odt, markdown                |
+| v0.4.0 | Mês 4 | áudio→texto (stub IA)                    |
+| v1.0.0 | IA    | transcrição completa de vídeo            |
+
+
