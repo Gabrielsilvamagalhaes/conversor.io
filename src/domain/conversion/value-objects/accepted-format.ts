@@ -1,5 +1,5 @@
-/** Extensões aceitas no MVP (apenas `.csv` nesta fase). */
-export const ACCEPTED_EXTENSIONS = ["csv"] as const;
+/** Extensões aceitas no MVP (planilhas: `.csv` e `.xlsx`). */
+export const ACCEPTED_EXTENSIONS = ["csv", "xlsx"] as const;
 
 export type AcceptedExtension = (typeof ACCEPTED_EXTENSIONS)[number];
 

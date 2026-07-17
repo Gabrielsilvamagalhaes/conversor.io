@@ -1,8 +1,14 @@
 import { EmptyFileError } from "@/domain/conversion/errors/empty-file.error";
 import { FileTooLargeError } from "@/domain/conversion/errors/file-too-large.error";
 import { InvalidFileTypeError } from "@/domain/conversion/errors/invalid-file-type.error";
-import type { FileTypeDetectorPort } from "@/domain/conversion/ports/file-type-detector.port";
-import { isAcceptedExtension } from "@/domain/conversion/value-objects/accepted-format";
+import type {
+  FileTypeDetection,
+  FileTypeDetectorPort,
+} from "@/domain/conversion/ports/file-type-detector.port";
+import {
+  type AcceptedExtension,
+  isAcceptedExtension,
+} from "@/domain/conversion/value-objects/accepted-format";
 import { FileName } from "@/domain/conversion/value-objects/file-name";
 import { MAX_DOCUMENT_SIZE_BYTES } from "@/shared/constants/upload";
 
@@ -16,13 +22,14 @@ export interface ValidatedUpload {
   readonly accepted: true;
   readonly fileName: string;
   readonly sizeBytes: number;
-  readonly extension: string;
+  readonly extension: AcceptedExtension;
   readonly message: string;
 }
 
 /**
- * Recebe e valida um upload (sem conversão nesta fase): tamanho, allowlist de
- * extensão e rejeição de binários/executáveis disfarçados via FileTypeDetectorPort.
+ * Valida um upload: tamanho, allowlist de extensão e coerência entre a extensão
+ * e o conteúdo real (magic bytes). `.csv` deve ser texto; `.xlsx` deve ser um
+ * container zip. Rejeita binários/executáveis disfarçados.
  */
 export class ValidateUploadUseCase {
   constructor(private readonly detector: FileTypeDetectorPort) {}
@@ -39,16 +46,31 @@ export class ValidateUploadUseCase {
     }
 
     const detection = this.detector.detect(input.bytes);
-    if (detection.isBinary || detection.signature !== null) {
-      throw new InvalidFileTypeError("conteúdo binário não corresponde a um .csv de texto");
-    }
+    this.assertContentMatchesExtension(name.extension, detection);
 
     return {
       accepted: true,
       fileName: name.value,
       sizeBytes: input.size,
       extension: name.extension,
-      message: "Arquivo recebido e validado. A conversão chega na próxima fase.",
+      message: "Arquivo recebido e validado.",
     };
+  }
+
+  private assertContentMatchesExtension(
+    extension: AcceptedExtension,
+    detection: FileTypeDetection,
+  ): void {
+    if (extension === "csv") {
+      if (detection.isBinary || detection.signature !== null) {
+        throw new InvalidFileTypeError("conteúdo binário não corresponde a um .csv de texto");
+      }
+      return;
+    }
+
+    // .xlsx é um container OOXML (zip).
+    if (detection.signature !== "zip") {
+      throw new InvalidFileTypeError("conteúdo não corresponde a uma planilha .xlsx");
+    }
   }
 }

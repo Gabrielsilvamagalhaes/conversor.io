@@ -13,3 +13,12 @@ export async function getServerSession(): Promise<AuthenticatedUser | null> {
   const sessionCookie = store.get(SESSION_COOKIE_NAME)?.value;
   return getContainer().getSession.execute({ sessionCookie });
 }
+
+/**
+ * Checagem barata de presença do cookie de sessão (sem verificação via Admin SDK).
+ * Suficiente para decidir destino de navegação (ex.: logo → dashboard).
+ */
+export async function hasSessionCookie(): Promise<boolean> {
+  const store = await cookies();
+  return Boolean(store.get(SESSION_COOKIE_NAME)?.value);
+}

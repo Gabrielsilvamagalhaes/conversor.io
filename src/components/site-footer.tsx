@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const FORMATS = ["xlsx ↔ csv", "docx → pdf", "pdf → txt", "json ↔ csv", "vídeo → áudio"];
+const FORMATS = ["csv ↔ xlsx", "docx → pdf", "pdf → txt", "json ↔ csv", "vídeo → áudio"];
 
 /** Rodapé: colunas + contato + barra legal. Arte é domínio público (Wikimedia). */
 export function SiteFooter() {

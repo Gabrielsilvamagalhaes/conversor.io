@@ -5,7 +5,13 @@ import { SiteHeader } from "@/components/site-header";
 import { Typewriter } from "@/components/typewriter";
 
 const PHRASES = ["um mestre.", "Da Vinci.", "do Renascimento.", "um relojoeiro."];
-const FORMATS = ["xlsx ↔ csv", "docx → pdf", "pdf → txt", "json ↔ csv", "vídeo → áudio"];
+const FORMATS: readonly { label: string; live: boolean }[] = [
+  { label: "csv ↔ xlsx", live: true },
+  { label: "docx → pdf", live: false },
+  { label: "pdf → txt", live: false },
+  { label: "json ↔ csv", live: false },
+  { label: "vídeo → áudio", live: false },
+];
 
 export default function Home() {
   return (
@@ -42,8 +48,15 @@ export default function Home() {
             </div>
             <div className="mt-10 flex flex-wrap gap-2">
               {FORMATS.map((f) => (
-                <span key={f} className="rounded border border-line px-2.5 py-1 text-xs text-muted">
-                  {f}
+                <span
+                  key={f.label}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
+                    f.live ? "border-sanguine/50 bg-sanguine/5 text-fg" : "border-line text-muted"
+                  }`}
+                >
+                  {f.live ? <span className="h-1.5 w-1.5 rounded-full bg-sanguine" /> : null}
+                  {f.label}
+                  {f.live ? null : <span className="text-[0.65rem] opacity-70">em breve</span>}
                 </span>
               ))}
             </div>
