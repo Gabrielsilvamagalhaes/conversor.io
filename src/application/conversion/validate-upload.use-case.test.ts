@@ -5,7 +5,7 @@ import { ValidateUploadUseCase } from "./validate-upload.use-case";
 const textDetector: FileTypeDetectorPort = {
   detect: () => ({ isBinary: false, signature: null }),
 };
-const binaryDetector: FileTypeDetectorPort = {
+const zipDetector: FileTypeDetectorPort = {
   detect: () => ({ isBinary: true, signature: "zip" }),
 };
 
@@ -49,10 +49,24 @@ describe("ValidateUploadUseCase", () => {
   });
 
   it("rejeita binário disfarçado de csv", () => {
-    const useCase = new ValidateUploadUseCase(binaryDetector);
+    const useCase = new ValidateUploadUseCase(zipDetector);
     expect(() => useCase.execute({ fileName: "x.csv", size: 4, bytes: bytes("PK..") })).toThrow(
       "inválido",
     );
+  });
+
+  it("aceita um xlsx com assinatura zip", () => {
+    const useCase = new ValidateUploadUseCase(zipDetector);
+    const result = useCase.execute({ fileName: "planilha.xlsx", size: 2048, bytes: bytes("PK..") });
+    expect(result.accepted).toBe(true);
+    expect(result.extension).toBe("xlsx");
+  });
+
+  it("rejeita xlsx cujo conteúdo não é um container zip", () => {
+    const useCase = new ValidateUploadUseCase(textDetector);
+    expect(() =>
+      useCase.execute({ fileName: "falso.xlsx", size: 12, bytes: bytes("a,b,c\n1,2,3") }),
+    ).toThrow("inválido");
   });
 
   it("rejeita arquivo sem extensão", () => {

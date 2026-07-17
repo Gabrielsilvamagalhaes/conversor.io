@@ -161,3 +161,21 @@ Trunk-based: `main` é a única branch permanente (protegida, só via PR). Nunca
 
 Domain: unit puro · Application: unit com mocks de ports · Infrastructure: integração
 (ffmpeg, sample files) · Presentation: E2E (Playwright).
+
+CI: `.github/workflows/ci.yml` roda `biome ci` + `typecheck` + `test` (Vitest) em cada push/PR;
+E2E é job separado e não-bloqueante. Em CI use `pnpm ci` (`biome ci`, não-mutante), nunca
+`pnpm check` (`--write`).
+
+## Diretrizes de desenvolvimento
+
+- **Testes quando fizer sentido.** Gerar testes quando forem necessários e coerentes — cobrir
+  lógica de domínio/aplicação e adapters com round-trip real; não inflar com testes triviais.
+- **UI/UX.** Priorizar boa experiência: hierarquia clara, estados de carregamento/erro/sucesso
+  visíveis, microcopy honesta (sinalizar o que ainda não existe), acessibilidade e feedback
+  animado sóbrio — sempre respeitando `prefers-reduced-motion`.
+- **Processamento de arquivos.** Levar performance em conta: ler/escrever em streaming (linha a
+  linha / chunks) para arquivos pesados, sem carregar tudo em memória. Revalidar no servidor
+  (tamanho, magic bytes) antes de converter.
+- **Tema claro e escuro.** Todo elemento novo deve funcionar nos dois temas — usar os tokens
+  (`--fg/--muted/--sanguine/--gold/--line/--bg/--bg-elev`), nunca cores fixas.
+- **Libs externas.** Sempre pedir permissão antes de adicionar uma dependência nova.

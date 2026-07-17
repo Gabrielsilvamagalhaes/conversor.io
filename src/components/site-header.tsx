@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { hasSessionCookie } from "@/infrastructure/auth/server-session";
 
 /** Top nav da landing: wordmark, links e toggle de tema. */
-export function SiteHeader() {
+export async function SiteHeader() {
+  const authenticated = await hasSessionCookie();
+  const logoHref = authenticated ? "/dashboard" : "/";
+
   return (
     <header className="flex items-center justify-between px-6 py-5 md:px-10">
-      <Link href="/" className="font-display text-lg font-semibold">
+      <Link href={logoHref} className="font-display text-lg font-semibold">
         conversor<span className="text-sanguine">.io</span>
       </Link>
       <nav className="flex items-center gap-5 text-sm text-muted">
@@ -14,10 +18,10 @@ export function SiteHeader() {
         </Link>
         <ThemeToggle />
         <Link
-          href="/login"
+          href={authenticated ? "/dashboard" : "/login"}
           className="rounded-full border border-line px-4 py-1.5 text-fg hover:bg-bg-elev"
         >
-          Entrar
+          {authenticated ? "Painel" : "Entrar"}
         </Link>
       </nav>
     </header>

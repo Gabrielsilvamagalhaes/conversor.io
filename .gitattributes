@@ -1,0 +1,11 @@
+# Normaliza finais de linha para LF (evita ruído CRLF no Windows e mantém o
+# Biome/CI determinísticos entre plataformas).
+* text=auto eol=lf
+
+# Binários não devem sofrer normalização.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary

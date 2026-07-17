@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileDropzone } from "@/components/file-dropzone";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getServerSession } from "@/infrastructure/auth/server-session";
 
-export default async function AppPage() {
+export default async function DashboardPage() {
   const user = await getServerSession();
-  if (!user) redirect("/login?redirect=/app");
+  if (!user) redirect("/login?redirect=/dashboard");
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -19,13 +18,20 @@ export default async function AppPage() {
           <ThemeToggle />
         </div>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-16">
-        <span className="text-xs uppercase tracking-[0.22em] text-gold">Conversão</span>
-        <h1 className="mt-3 font-display text-3xl">Converter planilha</h1>
-        <p className="mt-2 mb-8 max-w-md text-center text-sm text-muted">
-          Envie um .csv ou .xlsx. Mostramos tamanho, linhas e uma prévia antes de converter.
+
+      <main className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+        <span className="text-xs uppercase tracking-[0.22em] text-gold">Painel</span>
+        <h1 className="mt-3 font-display text-3xl">Seu ateliê está em preparo</h1>
+        <p className="mt-3 max-w-md text-sm text-muted">
+          Histórico de conversões, atalhos e preferências chegam na próxima etapa. Por ora, siga
+          convertendo suas planilhas.
         </p>
-        <FileDropzone />
+        <Link
+          href="/app"
+          className="mt-8 rounded-full bg-fg px-6 py-3 text-sm font-medium text-bg transition-opacity hover:opacity-90"
+        >
+          Ir para o conversor
+        </Link>
       </main>
     </div>
   );
