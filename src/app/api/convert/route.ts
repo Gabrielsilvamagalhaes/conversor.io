@@ -10,6 +10,8 @@ export const runtime = "nodejs";
 const CONTENT_TYPES: Record<string, string> = {
   csv: "text/csv; charset=utf-8",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  json: "application/json; charset=utf-8",
+  txt: "text/plain; charset=utf-8",
 };
 
 /** Valida o upload, converte para o formato de destino e devolve para download. */
@@ -17,6 +19,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const form = await request.formData();
   const file = form.get("file");
   const target = form.get("target");
+  const outputName = form.get("outputName");
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Nenhum arquivo enviado." }, { status: 400 });
@@ -35,6 +38,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       fileName: file.name,
       target,
       bytes,
+      outputBaseName: typeof outputName === "string" && outputName.trim() ? outputName : undefined,
     });
 
     // Cast: TS 5.7 tipa Uint8Array como genérico sobre ArrayBufferLike; o corpo aceita os bytes.

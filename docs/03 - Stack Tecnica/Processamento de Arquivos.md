@@ -49,12 +49,16 @@ Recomendação MVP: LibreOffice em container Docker local / CI com binary instal
 
 ## Storage temporário
 
-| Ambiente | Implementação |
-| --- | --- |
-| Dev | `os.tmpdir()` + cleanup cron |
-| Prod | Firebase Storage ou Cloudflare R2 |
+> Decisão detalhada em [[Decisão - Storage Temporário e TTL]]. **Não implementado**
+> — hoje a conversão é síncrona/em memória; implementação adiada até o Histórico
+> de Conversões (Fase 2), que compartilha o mesmo agregado `ConversionJob`.
 
-TTL padrão: **1 hora** — job scheduler ou lifecycle rule.
+Prod roda em **Vercel serverless** (FS efêmero por invocação), então `os.tmpdir()`
+não persiste entre requests: exige **object storage externo** (Firebase Storage ou
+Vercel Blob), não disco local.
+
+TTL padrão: **1 hora**, em duas camadas — lifecycle rule do bucket (limpeza real,
+sem cron) + checagem on-read (`now > expiresAt` → `410 Gone`).
 
 ## Limites MVP
 

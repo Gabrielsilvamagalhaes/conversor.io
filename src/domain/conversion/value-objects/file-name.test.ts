@@ -24,4 +24,26 @@ describe("FileName", () => {
   it("extensão vazia quando não há ponto", () => {
     expect(FileName.create("semponto").extension).toBe("");
   });
+
+  describe("sanitizeBase", () => {
+    it("mantém nome-base válido", () => {
+      expect(FileName.sanitizeBase("relatorio-final_2025")).toBe("relatorio-final_2025");
+    });
+
+    it("remove caminho (sem path traversal)", () => {
+      expect(FileName.sanitizeBase("../../etc/passwd")).toBe("passwd");
+    });
+
+    it("sanitiza caracteres perigosos", () => {
+      expect(FileName.sanitizeBase("a b*?<>|")).toBe("a_b_____");
+    });
+
+    it("remove pontos nas bordas", () => {
+      expect(FileName.sanitizeBase("...nome...")).toBe("nome");
+    });
+
+    it("rejeita nome que fica vazio após sanitização", () => {
+      expect(() => FileName.sanitizeBase("///")).toThrow("Nome de arquivo inválido.");
+    });
+  });
 });

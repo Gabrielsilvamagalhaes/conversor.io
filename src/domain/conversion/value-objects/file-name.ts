@@ -21,4 +21,19 @@ export class FileName {
     const extension = dot > 0 ? sanitized.slice(dot + 1).toLowerCase() : "";
     return new FileName(sanitized, extension);
   }
+
+  /**
+   * Sanitiza um nome-base fornecido pelo usuário (rename), sem exigir extensão.
+   * Remove diretórios (anti path traversal) e caracteres perigosos, reaproveitando
+   * a mesma política de `create`. Lança quando o resultado fica vazio.
+   */
+  static sanitizeBase(raw: string): string {
+    const base = raw.split(/[/\\]/).pop() ?? "";
+    const sanitized = base.replace(/[^A-Za-z0-9._-]/g, "_").replace(/\.{2,}/g, ".");
+    const trimmed = sanitized.replace(/^\.+|\.+$/g, "");
+    if (trimmed.trim().length === 0) {
+      throw new Error("Nome de arquivo inválido.");
+    }
+    return trimmed;
+  }
 }

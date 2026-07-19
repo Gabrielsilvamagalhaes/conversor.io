@@ -7,6 +7,8 @@ export interface ConvertFileInput {
   readonly fileName: string;
   readonly target: string;
   readonly bytes: Uint8Array;
+  /** Nome-base escolhido pelo usuário (rename). Sanitizado; sem ele, deriva do fileName. */
+  readonly outputBaseName?: string;
 }
 
 export interface ConvertedFile {
@@ -31,7 +33,9 @@ export class ConvertFileUseCase {
     if (!converter) throw new UnsupportedConversionError(from, to);
 
     const bytes = await converter.convert(input.bytes);
-    const base = name.value.replace(/\.[^.]+$/, "");
+    const base = input.outputBaseName
+      ? FileName.sanitizeBase(input.outputBaseName)
+      : name.value.replace(/\.[^.]+$/, "");
     return { fileName: `${base}.${to}`, bytes };
   }
 }
