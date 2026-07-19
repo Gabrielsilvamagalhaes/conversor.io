@@ -29,6 +29,67 @@ describe("ConvertFileUseCase", () => {
     expect(result.bytes).toBe(out);
   });
 
+  it("converte pares de dados (csv→json, json→csv)", async () => {
+    const out = new TextEncoder().encode("saída");
+    const registry = new ConverterRegistry([
+      fakeConverter("csv", "json", out),
+      fakeConverter("json", "csv", out),
+    ]);
+    const useCase = new ConvertFileUseCase(registry);
+
+    const toJson = await useCase.execute({
+      fileName: "dados.csv",
+      target: "json",
+      bytes: new Uint8Array([1]),
+    });
+    expect(toJson.fileName).toBe("dados.json");
+
+    const toCsv = await useCase.execute({
+      fileName: "dados.json",
+      target: "csv",
+      bytes: new Uint8Array([1]),
+    });
+    expect(toCsv.fileName).toBe("dados.csv");
+  });
+
+  it("usa o outputBaseName sanitizado no nome de saída", async () => {
+    const out = new TextEncoder().encode("x");
+    const registry = new ConverterRegistry([fakeConverter("csv", "xlsx", out)]);
+    const useCase = new ConvertFileUseCase(registry);
+
+    const result = await useCase.execute({
+      fileName: "dados.csv",
+      target: "xlsx",
+      bytes: new Uint8Array([1]),
+      outputBaseName: "../../relatório final",
+    });
+
+    expect(result.fileName).toBe("relat_rio_final.xlsx");
+  });
+
+  it("ignora outputBaseName vazio e deriva do fileName", async () => {
+    const out = new TextEncoder().encode("x");
+    const registry = new ConverterRegistry([fakeConverter("csv", "xlsx", out)]);
+    const useCase = new ConvertFileUseCase(registry);
+
+    const result = await useCase.execute({
+      fileName: "dados.csv",
+      target: "xlsx",
+      bytes: new Uint8Array([1]),
+      outputBaseName: undefined,
+    });
+
+    expect(result.fileName).toBe("dados.xlsx");
+  });
+
+  it("rejeita par 'em breve' (docx→pdf) mesmo com adapter registrado", async () => {
+    const registry = new ConverterRegistry([fakeConverter("docx", "pdf", new Uint8Array())]);
+    const useCase = new ConvertFileUseCase(registry);
+    await expect(
+      useCase.execute({ fileName: "a.docx", target: "pdf", bytes: new Uint8Array() }),
+    ).rejects.toBeInstanceOf(UnsupportedConversionError);
+  });
+
   it("rejeita par fora do catálogo", async () => {
     const useCase = new ConvertFileUseCase(new ConverterRegistry());
     await expect(

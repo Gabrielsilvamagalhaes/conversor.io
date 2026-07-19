@@ -28,8 +28,9 @@ export interface ValidatedUpload {
 
 /**
  * Valida um upload: tamanho, allowlist de extensão e coerência entre a extensão
- * e o conteúdo real (magic bytes). `.csv` deve ser texto; `.xlsx` deve ser um
- * container zip. Rejeita binários/executáveis disfarçados.
+ * e o conteúdo real (magic bytes). Formatos de texto (`.csv`, `.json`, `.txt`)
+ * devem ser texto; `.xlsx`/`.docx` são containers zip (OOXML); `.pdf` deve começar
+ * com `%PDF`. Rejeita binários/executáveis disfarçados.
  */
 export class ValidateUploadUseCase {
   constructor(private readonly detector: FileTypeDetectorPort) {}
@@ -61,16 +62,28 @@ export class ValidateUploadUseCase {
     extension: AcceptedExtension,
     detection: FileTypeDetection,
   ): void {
-    if (extension === "csv") {
+    // Formatos de texto: não podem ter assinatura binária conhecida nem byte NUL.
+    if (extension === "csv" || extension === "json" || extension === "txt") {
       if (detection.isBinary || detection.signature !== null) {
-        throw new InvalidFileTypeError("conteúdo binário não corresponde a um .csv de texto");
+        throw new InvalidFileTypeError(
+          `conteúdo binário não corresponde a um .${extension} de texto`,
+        );
       }
       return;
     }
 
-    // .xlsx é um container OOXML (zip).
+    // .pdf começa com %PDF.
+    if (extension === "pdf") {
+      if (detection.signature !== "pdf") {
+        throw new InvalidFileTypeError("conteúdo não corresponde a um documento .pdf");
+      }
+      return;
+    }
+
+    // .xlsx e .docx são containers OOXML (zip). Indistinguíveis por magic bytes:
+    // ambos começam com "PK"; a extensão é confiada além da checagem de zip.
     if (detection.signature !== "zip") {
-      throw new InvalidFileTypeError("conteúdo não corresponde a uma planilha .xlsx");
+      throw new InvalidFileTypeError(`conteúdo não corresponde a um arquivo .${extension}`);
     }
   }
 }

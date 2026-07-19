@@ -8,6 +8,9 @@ const textDetector: FileTypeDetectorPort = {
 const zipDetector: FileTypeDetectorPort = {
   detect: () => ({ isBinary: true, signature: "zip" }),
 };
+const pdfDetector: FileTypeDetectorPort = {
+  detect: () => ({ isBinary: true, signature: "pdf" }),
+};
 
 function bytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
@@ -67,6 +70,41 @@ describe("ValidateUploadUseCase", () => {
     expect(() =>
       useCase.execute({ fileName: "falso.xlsx", size: 12, bytes: bytes("a,b,c\n1,2,3") }),
     ).toThrow("inválido");
+  });
+
+  it("aceita um json de texto válido", () => {
+    const useCase = new ValidateUploadUseCase(textDetector);
+    const result = useCase.execute({ fileName: "dados.json", size: 20, bytes: bytes('[{"a":1}]') });
+    expect(result.accepted).toBe(true);
+    expect(result.extension).toBe("json");
+  });
+
+  it("rejeita binário disfarçado de json", () => {
+    const useCase = new ValidateUploadUseCase(zipDetector);
+    expect(() => useCase.execute({ fileName: "x.json", size: 4, bytes: bytes("PK..") })).toThrow(
+      "inválido",
+    );
+  });
+
+  it("aceita um pdf com assinatura %PDF", () => {
+    const useCase = new ValidateUploadUseCase(pdfDetector);
+    const result = useCase.execute({ fileName: "doc.pdf", size: 2048, bytes: bytes("%PDF-1.7") });
+    expect(result.accepted).toBe(true);
+    expect(result.extension).toBe("pdf");
+  });
+
+  it("rejeita pdf sem a assinatura %PDF", () => {
+    const useCase = new ValidateUploadUseCase(textDetector);
+    expect(() =>
+      useCase.execute({ fileName: "falso.pdf", size: 12, bytes: bytes("texto") }),
+    ).toThrow("inválido");
+  });
+
+  it("aceita um docx com assinatura zip", () => {
+    const useCase = new ValidateUploadUseCase(zipDetector);
+    const result = useCase.execute({ fileName: "carta.docx", size: 4096, bytes: bytes("PK..") });
+    expect(result.accepted).toBe(true);
+    expect(result.extension).toBe("docx");
   });
 
   it("rejeita arquivo sem extensão", () => {
