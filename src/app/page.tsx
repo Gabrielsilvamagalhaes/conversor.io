@@ -7,9 +7,10 @@ import { Typewriter } from "@/components/typewriter";
 const PHRASES = ["um mestre.", "Da Vinci.", "do Renascimento.", "um relojoeiro."];
 const FORMATS: readonly { label: string; live: boolean }[] = [
   { label: "csv ↔ xlsx", live: true },
+  { label: "json ↔ csv", live: true },
+  { label: "pdf → txt", live: true },
   { label: "docx → pdf", live: false },
-  { label: "pdf → txt", live: false },
-  { label: "json ↔ csv", live: false },
+  { label: "pdf → docx", live: false },
   { label: "vídeo → áudio", live: false },
 ];
 
