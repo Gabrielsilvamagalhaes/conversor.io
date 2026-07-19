@@ -9,6 +9,7 @@ import { ValidateUploadUseCase } from "@/application/conversion/validate-upload.
 import { CreateSessionUseCase } from "@/application/identity/create-session.use-case";
 import { GetSessionUseCase } from "@/application/identity/get-session.use-case";
 import { RevokeSessionUseCase } from "@/application/identity/revoke-session.use-case";
+import { loadUploadConfig } from "@/di/env";
 import { FirebaseAuthAdapter } from "@/infrastructure/auth/firebase-auth.adapter";
 import { CsvToJsonAdapter } from "@/infrastructure/conversion/converters/csv-to-json.adapter";
 import { CsvToXlsxAdapter } from "@/infrastructure/conversion/converters/csv-to-xlsx.adapter";
@@ -42,6 +43,7 @@ let cached: Container | null = null;
 export function getContainer(): Container {
   if (cached) return cached;
 
+  const uploadConfig = loadUploadConfig();
   const authSession = new FirebaseAuthAdapter();
   const fileTypeDetector = new MagicBytesDetector();
   const spreadsheetReader = new SpreadsheetReader();
@@ -59,12 +61,12 @@ export function getContainer(): Container {
     createSession: new CreateSessionUseCase(authSession),
     getSession: new GetSessionUseCase(authSession),
     revokeSession: new RevokeSessionUseCase(authSession),
-    validateUpload: new ValidateUploadUseCase(fileTypeDetector),
+    validateUpload: new ValidateUploadUseCase(fileTypeDetector, uploadConfig.maxDocumentSizeBytes),
     previewSpreadsheet: new PreviewSpreadsheetUseCase(spreadsheetReader),
     previewPdf: new PreviewPdfUseCase(pdfReader),
     previewJson: new PreviewJsonUseCase(jsonReader),
     convertFile: new ConvertFileUseCase(converterRegistry),
-    getConversionCatalog: new GetConversionCatalogUseCase(),
+    getConversionCatalog: new GetConversionCatalogUseCase(uploadConfig.maxDocumentSizeMb),
   };
   return cached;
 }
