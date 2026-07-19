@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { toErrorResponse } from "@/app/api/_lib/error-response";
 import { getContainer } from "@/di/container";
-import { EmptyFileError } from "@/domain/conversion/errors/empty-file.error";
-import { FileTooLargeError } from "@/domain/conversion/errors/file-too-large.error";
-import { InvalidFileTypeError } from "@/domain/conversion/errors/invalid-file-type.error";
 
 export const runtime = "nodejs";
 
@@ -24,13 +22,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    if (
-      error instanceof EmptyFileError ||
-      error instanceof FileTooLargeError ||
-      error instanceof InvalidFileTypeError
-    ) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Falha ao validar o upload." }, { status: 500 });
+    return toErrorResponse(error, "Falha ao validar o upload.");
   }
 }

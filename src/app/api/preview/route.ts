@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { toErrorResponse } from "@/app/api/_lib/error-response";
 import { getContainer } from "@/di/container";
-import { EmptyFileError } from "@/domain/conversion/errors/empty-file.error";
-import { FileTooLargeError } from "@/domain/conversion/errors/file-too-large.error";
-import { InvalidFileTypeError } from "@/domain/conversion/errors/invalid-file-type.error";
 import {
   type ConversionCategory,
   liveTargetsFor,
@@ -10,6 +8,7 @@ import {
 
 export const runtime = "nodejs";
 
+// Mídia não passa por aqui: o vídeo é lido e convertido no navegador (ffmpeg.wasm).
 const CATEGORIES: readonly ConversionCategory[] = ["spreadsheets", "data", "documents"];
 const PREVIEWABLE = new Set(["csv", "xlsx"]);
 
@@ -70,13 +69,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 200 },
     );
   } catch (error) {
-    if (
-      error instanceof EmptyFileError ||
-      error instanceof FileTooLargeError ||
-      error instanceof InvalidFileTypeError
-    ) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Falha ao ler o arquivo." }, { status: 500 });
+    return toErrorResponse(error, "Falha ao ler o arquivo.");
   }
 }
