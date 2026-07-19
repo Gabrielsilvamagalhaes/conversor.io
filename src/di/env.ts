@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { DEFAULT_MAX_DOCUMENT_SIZE_MB } from "@/shared/constants/upload";
 
 /**
  * Validação das variáveis de ambiente do Firebase Admin (server-only).
@@ -34,4 +35,40 @@ export function loadFirebaseAdminEnv(): FirebaseAdminEnv {
 
   cached = parsed.data;
   return cached;
+}
+
+/**
+ * Limite de tamanho de documentos/dados, resolvido do ambiente.
+ *
+ * `MAX_DOCUMENT_SIZE_MB` (opcional) permite subir o teto em self-host/Vercel Pro sem recompilar;
+ * o default seguro (`DEFAULT_MAX_DOCUMENT_SIZE_MB`) mantém o body abaixo do limite serverless.
+ */
+const uploadEnvSchema = z.object({
+  MAX_DOCUMENT_SIZE_MB: z.coerce.number().int().positive().default(DEFAULT_MAX_DOCUMENT_SIZE_MB),
+});
+
+export interface UploadConfig {
+  readonly maxDocumentSizeMb: number;
+  readonly maxDocumentSizeBytes: number;
+}
+
+let cachedUpload: UploadConfig | null = null;
+
+export function loadUploadConfig(): UploadConfig {
+  if (cachedUpload) return cachedUpload;
+
+  const parsed = uploadEnvSchema.safeParse({
+    MAX_DOCUMENT_SIZE_MB: process.env.MAX_DOCUMENT_SIZE_MB,
+  });
+
+  if (!parsed.success) {
+    throw new Error(`Invalid upload environment:\n${z.prettifyError(parsed.error)}`);
+  }
+
+  const maxDocumentSizeMb = parsed.data.MAX_DOCUMENT_SIZE_MB;
+  cachedUpload = {
+    maxDocumentSizeMb,
+    maxDocumentSizeBytes: maxDocumentSizeMb * 1024 * 1024,
+  };
+  return cachedUpload;
 }

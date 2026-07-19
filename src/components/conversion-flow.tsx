@@ -5,13 +5,20 @@ import { motion, useReducedMotion } from "motion/react";
 interface ConversionFlowProps {
   readonly from: string;
   readonly to: string;
+  /**
+   * Progresso real, 0–1 (conversão client/vídeo via ffmpeg). Quando ausente (conversão
+   * de servidor, sem eventos de progresso), a barra roda a animação decorativa por tempo.
+   */
+  readonly progress?: number;
 }
 
 const STEPS = ["Enviando", "Transmutando", "Finalizando"] as const;
 
 /** Fluxo animado exibido durante a conversão (upload → convert → finalize). */
-export function ConversionFlow({ from, to }: ConversionFlowProps) {
+export function ConversionFlow({ from, to, progress }: ConversionFlowProps) {
   const reduceMotion = useReducedMotion();
+  const hasRealProgress = progress !== undefined;
+  const pct = hasRealProgress ? Math.round(Math.min(1, Math.max(0, progress)) * 100) : null;
 
   return (
     <div className="rounded-2xl border border-line bg-bg-elev p-10 text-center">
@@ -46,13 +53,23 @@ export function ConversionFlow({ from, to }: ConversionFlowProps) {
       </div>
 
       <div className="mt-8 h-1 w-full overflow-hidden rounded-full bg-line">
-        <motion.div
-          className="h-full bg-gradient-to-r from-sanguine to-gold"
-          initial={{ width: "0%" }}
-          animate={reduceMotion ? { width: "100%" } : { width: ["0%", "70%", "92%"] }}
-          transition={{ duration: 2.4, ease: "easeOut" }}
-        />
+        {hasRealProgress ? (
+          <motion.div
+            className="h-full bg-gradient-to-r from-sanguine to-gold"
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: reduceMotion ? 0 : 0.3, ease: "easeOut" }}
+          />
+        ) : (
+          <motion.div
+            className="h-full bg-gradient-to-r from-sanguine to-gold"
+            initial={{ width: "0%" }}
+            animate={reduceMotion ? { width: "100%" } : { width: ["0%", "70%", "92%"] }}
+            transition={{ duration: 2.4, ease: "easeOut" }}
+          />
+        )}
       </div>
+
+      {pct !== null ? <p className="mt-3 text-xs tabular-nums text-muted">{pct}%</p> : null}
     </div>
   );
 }

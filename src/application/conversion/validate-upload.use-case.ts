@@ -10,7 +10,6 @@ import {
   isAcceptedExtension,
 } from "@/domain/conversion/value-objects/accepted-format";
 import { FileName } from "@/domain/conversion/value-objects/file-name";
-import { MAX_DOCUMENT_SIZE_BYTES } from "@/shared/constants/upload";
 
 export interface ValidateUploadInput {
   readonly fileName: string;
@@ -33,12 +32,15 @@ export interface ValidatedUpload {
  * com `%PDF`. Rejeita binários/executáveis disfarçados.
  */
 export class ValidateUploadUseCase {
-  constructor(private readonly detector: FileTypeDetectorPort) {}
+  constructor(
+    private readonly detector: FileTypeDetectorPort,
+    private readonly maxSizeBytes: number,
+  ) {}
 
   execute(input: ValidateUploadInput): ValidatedUpload {
     if (input.size <= 0) throw new EmptyFileError();
-    if (input.size > MAX_DOCUMENT_SIZE_BYTES) {
-      throw new FileTooLargeError(input.size, MAX_DOCUMENT_SIZE_BYTES);
+    if (input.size > this.maxSizeBytes) {
+      throw new FileTooLargeError(input.size, this.maxSizeBytes);
     }
 
     const name = FileName.create(input.fileName);

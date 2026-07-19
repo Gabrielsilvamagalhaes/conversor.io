@@ -1,7 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { type DragEvent, useMemo, useRef, useState } from "react";
+import { type DragEvent, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { ConversionCatalogDto } from "@/application/conversion/catalog/get-conversion-catalog.use-case";
 import { CategoryTabs } from "@/components/category-tabs";
 import { ConversionFlow } from "@/components/conversion-flow";
@@ -10,14 +11,26 @@ import { JsonPreview } from "@/components/json-preview";
 import { PdfPreview } from "@/components/pdf-preview";
 import { SpreadsheetPreview } from "@/components/spreadsheet-preview";
 import { Input } from "@/components/ui/input";
+import { VideoPreview } from "@/components/video-preview";
+import {
+  type AudioExtension,
+  isAudioExtension,
+} from "@/domain/conversion/value-objects/accepted-format";
+import { convertVideoToAudio } from "@/lib/media/convert-video-to-audio";
+import { validateMedia } from "@/lib/media/validate-media";
+import { isMediaError, MEDIA_ERROR_MESSAGES } from "@/shared/media/media-error";
 
 type Status = "idle" | "reading" | "ready" | "converting" | "done" | "error";
 
 interface PreviewData {
+  readonly kind: "document" | "media";
   readonly fileName: string;
   readonly extension: string;
   readonly targets: string[];
   readonly sizeMb: number;
+  /** Mídia: duração do vídeo e object URL da prévia (revogado no reset/unmount). */
+  readonly durationSeconds: number | null;
+  readonly videoUrl: string | null;
   readonly totalRows: number | null;
   readonly columns: number | null;
   readonly previewRows: string[][] | null;
@@ -38,6 +51,8 @@ interface FileDropzoneProps {
 export function FileDropzone({ catalog }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<File | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const mediaUrlRef = useRef<string | null>(null);
   const reduceMotion = useReducedMotion();
 
   const [activeCategory, setActiveCategory] = useState<string>(catalog.categories[0].id);
@@ -47,6 +62,7 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
   const [target, setTarget] = useState<string | null>(null);
   const [outputName, setOutputName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const category = useMemo(
     () => catalog.categories.find((c) => c.id === activeCategory) ?? catalog.categories[0],
@@ -55,6 +71,24 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
   const accept = category.extensions.map((ext) => `.${ext}`).join(",");
   const livePairs = category.pairs.filter((pair) => pair.live);
   const comingSoon = category.pairs.filter((pair) => !pair.live);
+  // Categoria de mídia: conversão roda no navegador (ffmpeg.wasm), não em /api/convert.
+  const isMediaCategory = category.pairs.some((pair) => pair.engine === "client");
+
+  function revokeMediaUrl(): void {
+    if (mediaUrlRef.current) {
+      URL.revokeObjectURL(mediaUrlRef.current);
+      mediaUrlRef.current = null;
+    }
+  }
+
+  // Aborta conversão em curso e libera o object URL do vídeo ao desmontar.
+  // Usa os refs diretamente (estáveis) para o efeito rodar só no unmount.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      if (mediaUrlRef.current) URL.revokeObjectURL(mediaUrlRef.current);
+    };
+  }, []);
 
   // Opções de destino para o arquivo já enviado (dentro da categoria ativa).
   const targetOptions = preview
@@ -62,12 +96,16 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
     : [];
 
   function reset(): void {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    revokeMediaUrl();
     fileRef.current = null;
     setStatus("idle");
     setPreview(null);
     setTarget(null);
     setOutputName("");
     setError(null);
+    setProgress(0);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -82,6 +120,12 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
     setError(null);
     setPreview(null);
     setTarget(null);
+    revokeMediaUrl();
+
+    if (isMediaCategory) {
+      await readMediaPreview(file);
+      return;
+    }
 
     const body = new FormData();
     body.append("file", file);
@@ -94,7 +138,12 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
         setStatus("error");
         return;
       }
-      const parsed = data as PreviewData;
+      const parsed: PreviewData = {
+        kind: "document",
+        durationSeconds: null,
+        videoUrl: null,
+        ...(data as Omit<PreviewData, "kind" | "durationSeconds" | "videoUrl">),
+      };
       setPreview(parsed);
       setTarget(parsed.targets[0] ?? null);
       setOutputName(stripExtension(parsed.fileName));
@@ -105,11 +154,56 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
     }
   }
 
+  /** Prévia de vídeo 100% no navegador: valida, lê metadados e reutiliza o object URL. */
+  async function readMediaPreview(file: File): Promise<void> {
+    try {
+      const media = await validateMedia(file);
+      mediaUrlRef.current = media.objectUrl;
+      const targets = category.pairs
+        .filter((pair) => pair.live && pair.from === media.extension)
+        .map((pair) => pair.to);
+      const data: PreviewData = {
+        kind: "media",
+        fileName: file.name,
+        extension: media.extension,
+        targets,
+        sizeMb: Number((file.size / (1024 * 1024)).toFixed(2)),
+        durationSeconds: media.durationSeconds,
+        videoUrl: media.objectUrl,
+        totalRows: null,
+        columns: null,
+        previewRows: null,
+        pageCount: null,
+        pdfText: null,
+        jsonRootKind: null,
+        jsonItemCount: null,
+        jsonDepth: null,
+        jsonSample: null,
+        jsonTruncated: null,
+      };
+      setPreview(data);
+      setTarget(targets[0] ?? null);
+      setOutputName(stripExtension(file.name));
+      setStatus("ready");
+    } catch (err) {
+      const message = isMediaError(err) ? err.message : MEDIA_ERROR_MESSAGES.unknown;
+      setError(message);
+      setStatus("error");
+      toast.error(message);
+    }
+  }
+
   async function convert(): Promise<void> {
     const file = fileRef.current;
     if (!file || !preview || !target) return;
-    setStatus("converting");
     setError(null);
+
+    if (preview.kind === "media") {
+      await convertMedia(file, preview, target);
+      return;
+    }
+
+    setStatus("converting");
 
     const safeBase = sanitizeBaseName(outputName) || stripExtension(preview.fileName);
     const body = new FormData();
@@ -131,6 +225,48 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
       setError("Erro de rede durante a conversão.");
       setStatus("error");
     }
+  }
+
+  /** Converte vídeo → áudio no navegador com progresso real e cancelamento. */
+  async function convertMedia(file: File, current: PreviewData, to: string): Promise<void> {
+    if (!isAudioExtension(to)) {
+      const message = MEDIA_ERROR_MESSAGES.unsupported_pair;
+      setError(message);
+      setStatus("error");
+      toast.error(message);
+      return;
+    }
+
+    setStatus("converting");
+    setProgress(0);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const safeBase = sanitizeBaseName(outputName) || stripExtension(current.fileName);
+
+    try {
+      const blob = await convertVideoToAudio(file, to as AudioExtension, {
+        onProgress: setProgress,
+        signal: controller.signal,
+      });
+      triggerDownload(blob, `${safeBase}.${to}`);
+      setStatus("done");
+    } catch (err) {
+      if (isMediaError(err) && err.code === "cancelled") {
+        toast(MEDIA_ERROR_MESSAGES.cancelled);
+        setStatus("ready");
+        return;
+      }
+      const message = isMediaError(err) ? err.message : MEDIA_ERROR_MESSAGES.unknown;
+      setError(message);
+      setStatus("error");
+      toast.error(message);
+    } finally {
+      abortRef.current = null;
+    }
+  }
+
+  function cancelConversion(): void {
+    abortRef.current?.abort();
   }
 
   function onDrop(event: DragEvent<HTMLDivElement>): void {
@@ -200,7 +336,7 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
                 {comingSoon.length > 0
                   ? ` · em breve: ${comingSoon.map((p) => `${p.from} → ${p.to}`).join(", ")}`
                   : ""}{" "}
-                · máx. 10 MB
+                · máx. {category.maxSizeMb} MB
               </p>
               {status === "reading" ? (
                 <motion.p
@@ -223,7 +359,16 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
             exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
             className="space-y-5"
           >
-            {preview.previewRows ? (
+            {preview.kind === "media" && preview.videoUrl ? (
+              <VideoPreview
+                src={preview.videoUrl}
+                fileName={preview.fileName}
+                extension={preview.extension}
+                target={target ?? "—"}
+                sizeMb={preview.sizeMb}
+                durationSeconds={preview.durationSeconds}
+              />
+            ) : preview.previewRows ? (
               <SpreadsheetPreview
                 fileName={preview.fileName}
                 extension={preview.extension as "csv" | "xlsx"}
@@ -336,7 +481,22 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
             animate={{ opacity: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0 }}
           >
-            <ConversionFlow from={preview.extension} to={target ?? ""} />
+            <ConversionFlow
+              from={preview.extension}
+              to={target ?? ""}
+              progress={preview.kind === "media" ? progress : undefined}
+            />
+            {preview.kind === "media" ? (
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={cancelConversion}
+                  className="rounded-full border border-line px-5 py-2 text-sm font-medium hover:bg-bg-elev"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : null}
           </motion.div>
         ) : null}
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -34,7 +35,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: anti-FOUC theme bootstrap */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }
