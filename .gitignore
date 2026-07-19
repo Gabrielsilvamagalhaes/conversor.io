@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# ffmpeg.wasm core (copiado no postinstall a partir de node_modules)
+/public/ffmpeg/
+
 # production
 /build
 
