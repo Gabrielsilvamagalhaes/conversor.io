@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CONVERSION_PAIRS,
+  isClientConvertiblePair,
   isSupportedPair,
   liveTargetsFor,
   pairsForCategory,
@@ -38,8 +39,19 @@ describe("conversion-pair", () => {
     expect(docs.filter((p) => !p.live)).toHaveLength(2);
   });
 
-  it("catálogo cobre as três categorias", () => {
+  it("catálogo cobre as quatro categorias", () => {
     const categories = new Set(CONVERSION_PAIRS.map((p) => p.category));
-    expect(categories).toEqual(new Set(["spreadsheets", "data", "documents"]));
+    expect(categories).toEqual(new Set(["spreadsheets", "data", "documents", "media"]));
+  });
+
+  it("isSupportedPair (servidor) rejeita pares de mídia com engine client", () => {
+    expect(isSupportedPair("mp4", "mp3")).toBe(false);
+    expect(isSupportedPair("webm", "wav")).toBe(false);
+  });
+
+  it("isClientConvertiblePair vale só para pares de mídia live", () => {
+    expect(isClientConvertiblePair("mp4", "mp3")).toBe(true);
+    expect(isClientConvertiblePair("mov", "wav")).toBe(true);
+    expect(isClientConvertiblePair("csv", "xlsx")).toBe(false);
   });
 });
