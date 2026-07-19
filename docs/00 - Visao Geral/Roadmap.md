@@ -6,9 +6,9 @@ Cronograma macro alinhado à [[Progressão Mensal]] e à visão em [[Visão do P
 
 - [x] Repositório Git + [[Conventional Commits]]
 - [x] Scaffold Next.js 16 conforme [[Estrutura de Pastas]]
-- [ ] Firebase Auth + middleware de sessão — [[Firebase Auth]]
-- [ ] Pipeline [[GitHub Actions]] (lint, typecheck, build)
-- [ ] UI: upload, seleção de conversão, download
+- [x] Firebase Auth + middleware de sessão — [[Firebase Auth]]
+- [x] Pipeline [[GitHub Actions]] (lint, typecheck, build)
+- [x] UI: upload, seleção de conversão, download
 
 ## Fase 1 — MVP (Semanas 3–6)
 
@@ -17,11 +17,15 @@ Cronograma macro alinhado à [[Progressão Mensal]] e à visão em [[Visão do P
 - [ ] Storage temporário + TTL
 - [ ] Tratamento de erros e limites de tamanho
 
+
+
 ## Fase 2 — Consolidação (Mês 2)
 
 - [ ] Histórico de conversões (usuário logado)
 - [ ] Novos pares do mês 2 na [[Progressão Mensal]]
 - [ ] Observabilidade (logs estruturados, métricas)
+
+
 
 ## Fase 3 — Escala (Mês 3+)
 
@@ -29,10 +33,14 @@ Cronograma macro alinhado à [[Progressão Mensal]] e à visão em [[Visão do P
 - [ ] Conversões em lote
 - [ ] Novos pares mensais contínuos
 
+
+
 ## Fase 4 — IA (futuro)
 
 - [ ] [[Transcrição de Vídeo com IA]]
 - [ ] Resumo automático de transcrições
+
+
 
 ## Releases sugeridas
 
