@@ -3,8 +3,12 @@ import { type App, cert, getApps, initializeApp } from "firebase-admin/app";
 import { type Auth, getAuth } from "firebase-admin/auth";
 import { loadFirebaseAdminEnv } from "@/di/env";
 
-/** Inicializa (uma única vez) o Firebase Admin app com a service account. */
-function getAdminApp(): App {
+/**
+ * Inicializa (uma única vez) o Firebase Admin app com a service account.
+ * Exportado para que outros adapters (ex.: Firestore) reaproveitem o mesmo app,
+ * em vez de criar uma credencial nova.
+ */
+export function getAdminApp(): App {
   const existing = getApps();
   if (existing.length > 0) return existing[0] as App;
 
