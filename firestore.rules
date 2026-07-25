@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Todo acesso ao Firestore neste projeto passa pelo Firebase Admin SDK no
+    // servidor (src/infrastructure/persistence/firestore/), que autentica por
+    // service account e ignora estas regras por design. Nenhum cliente web lê
+    // ou escreve diretamente, então negar tudo é o estado correto — e não
+    // degrada nenhuma funcionalidade.
+    //
+    // Se um dia o client precisar ler o próprio histórico, a regra vira:
+    //   match /users/{uid}/conversions/{jobId} {
+    //     allow read: if request.auth != null && request.auth.uid == uid;
+    //     allow write: if false;   // escrita continua exclusiva do servidor
+    //   }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
