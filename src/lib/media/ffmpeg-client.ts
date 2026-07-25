@@ -23,6 +23,7 @@ async function load(): Promise<FFmpeg> {
       wasmURL: await toBlobURL(`${CORE_BASE}/ffmpeg-core.wasm`, "application/wasm"),
     });
   } catch {
+    // Sem logger de servidor no browser; o chamador recebe o erro tipado e decide a UI.
     throw new MediaError("load_failed");
   }
   instance = ffmpeg;

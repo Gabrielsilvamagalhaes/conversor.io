@@ -1,6 +1,7 @@
 import type { AuthenticatedUser } from "@/domain/identity/entities/authenticated-user";
 import { UnauthorizedError } from "@/domain/identity/errors/auth-errors";
 import type { AuthSessionPort } from "@/domain/identity/ports/auth-session.port";
+import type { LoggerPort } from "@/domain/observability/ports/logger.port";
 import { getAdminAuth } from "@/infrastructure/auth/firebase-admin";
 
 /**
@@ -9,6 +10,8 @@ import { getAdminAuth } from "@/infrastructure/auth/firebase-admin";
  * `AuthenticatedUser`, mantendo o Firebase fora do domínio/aplicação.
  */
 export class FirebaseAuthAdapter implements AuthSessionPort {
+  constructor(private readonly logger?: LoggerPort) {}
+
   async createSessionCookie(idToken: string, expiresInMs: number): Promise<string> {
     return getAdminAuth().createSessionCookie(idToken, { expiresIn: expiresInMs });
   }
@@ -22,7 +25,12 @@ export class FirebaseAuthAdapter implements AuthSessionPort {
         displayName: (claims.name as string | undefined) ?? null,
         provider: claims.firebase?.sign_in_provider ?? "unknown",
       };
-    } catch {
+    } catch (error) {
+      this.logger?.warn({
+        event: "session_claims_parse_failed",
+        service: "identity-service",
+        error,
+      });
       throw new UnauthorizedError("Invalid or expired session cookie");
     }
   }
@@ -31,8 +39,13 @@ export class FirebaseAuthAdapter implements AuthSessionPort {
     try {
       const claims = await getAdminAuth().verifySessionCookie(sessionCookie);
       await getAdminAuth().revokeRefreshTokens(claims.sub);
-    } catch {
-      // Cookie já inválido/expirado — nada a revogar.
+    } catch (error) {
+      // Cookie já inválido/expirado — nada a revogar (revogação é idempotente por design).
+      this.logger?.warn({
+        event: "session_revoke_failed",
+        service: "identity-service",
+        error,
+      });
     }
   }
 }

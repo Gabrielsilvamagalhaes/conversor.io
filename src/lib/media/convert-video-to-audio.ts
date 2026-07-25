@@ -89,7 +89,8 @@ export async function convertVideoToAudio(
     signal?.removeEventListener("abort", onAbort);
     if (!cancelled && !timedOut) {
       ffmpeg.off("progress", onProgressHandler);
-      // Limpa o FS virtual; ignora se o worker já foi encerrado.
+      // Limpa o FS virtual; ignora se o worker já foi encerrado (sem logger de servidor no
+      // browser — o worker terminado já é um estado esperado aqui, nada a reportar).
       await ffmpeg.deleteFile(inputName).catch(() => {});
       await ffmpeg.deleteFile(outputName).catch(() => {});
     }
