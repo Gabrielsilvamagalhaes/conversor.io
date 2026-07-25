@@ -32,7 +32,16 @@ Escopo fechado da v0.1 do [[Projeto Com Hans]].
 - `mp4` / `webm` / `mov` → `mp3`
 - `mp4` / `webm` / `mov` → `wav`
 
-**Total:** 9 pares de conversão na launch.
+**Total:** 9 pares de conversão na launch. Todos os 9 estão `live` — inclusive
+`docx → pdf`, que rodava com adapter ainda não implementado no início do MVP e passou a
+`live: true` na Fase 2 (mammoth + pdfmake, sem LibreOffice — ver
+[[Decisão - Conversão docx para pdf sem LibreOffice]]).
+
+## Adendo (Fase 2) — além do escopo original
+
+Fora dos 5 formatos base acima, a Fase 2 também entregou `xlsx → json` (categoria Dados,
+streaming via ExcelJS) — não fazia parte do MVP fechado, mas coube junto por reaproveitar
+o mesmo leitor de planilha do par `xlsx → csv`. Ver [[Matriz de Conversões]].
 
 ## UX mínima
 
@@ -44,11 +53,18 @@ Escopo fechado da v0.1 do [[Projeto Com Hans]].
 
 ## Critérios de aceite
 
-- [ ] Todos os 9 pares funcionam com arquivo de exemplo documentado
-- [ ] Erro claro para formato não suportado
-- [ ] Arquivo expira após 1h
-- [ ] Conversão anônima funcional (rate limit básico)
-- [ ] Login opcional via Firebase
+- [x] Todos os 9 pares funcionam com arquivo de exemplo documentado (fixtures em
+      `src/infrastructure/conversion/converters/__fixtures__/` + testes de round-trip)
+- [x] Erro claro para formato não suportado — `mapDomainError` central, mensagens pt-BR
+- [ ] Arquivo expira após 1h — TTL segue não implementado, adiado para a Fase 3 (ver
+      [[Decisão - Storage Temporário e TTL]])
+- [ ] Conversão anônima funcional (rate limit básico) — **revertido na Fase 2**: `/api/upload`,
+      `/api/preview` e `/api/convert` agora exigem sessão (`requireSession()`). Antes eram
+      públicas por descuido — o gate de login era só de navegação, não da API — e isso foi
+      fechado como correção de segurança. Efeito colateral: o critério original de MVP
+      ("conversão anônima") deixou de valer; hoje é preciso estar logado para converter.
+- [ ] Login opcional via Firebase — login via Firebase existe e funciona, mas deixou de ser
+      **opcional**: pelo motivo acima, hoje é exigido para converter
 
 ## Arquivos de teste
 

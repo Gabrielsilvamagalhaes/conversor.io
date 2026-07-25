@@ -29,6 +29,9 @@
 - [[Camadas e Dependências]]
 - [[Bounded Contexts]]
 - [[Estrutura de Pastas]]
+- [[Decisão - Storage Temporário e TTL]]
+- [[Decisão - Observabilidade e Logs Estruturados]]
+- [[Decisão - Conversão docx para pdf sem LibreOffice]]
 
 ### Domínio
 - [[Contexto Conversão de Arquivos]]
