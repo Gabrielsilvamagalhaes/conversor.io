@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
+import { buildRequestContext, elapsedMs, REQUEST_ID_HEADER } from "@/app/api/_lib/request-context";
 import { getContainer } from "@/di/container";
 import { SESSION_COOKIE_NAME } from "@/shared/constants/auth";
 
@@ -8,11 +9,17 @@ export const runtime = "nodejs";
 
 /** Cria o session cookie a partir do Firebase ID token enviado pelo client. */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const startedAt = Date.now();
+  const { requestId, clientIp } = buildRequestContext(request);
+  const log = getContainer().logger.child({ service: "api-gateway", requestId, clientIp });
+
   const body = (await request.json().catch(() => null)) as { idToken?: string } | null;
   const idToken = body?.idToken;
 
   if (!idToken) {
-    return NextResponse.json({ error: "idToken is required" }, { status: 400 });
+    const response = NextResponse.json({ error: "idToken is required" }, { status: 400 });
+    response.headers.set(REQUEST_ID_HEADER, requestId);
+    return response;
   }
 
   try {
@@ -25,9 +32,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       path: "/",
       maxAge: Math.floor(expiresInMs / 1000),
     });
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    log.info({
+      event: "session_created",
+      status: 200,
+      durationMs: elapsedMs(startedAt),
+    });
+
+    const response = NextResponse.json({ ok: true });
+    response.headers.set(REQUEST_ID_HEADER, requestId);
+    return response;
+  } catch (error) {
+    log.warn({
+      event: "session_create_failed",
+      status: 401,
+      durationMs: elapsedMs(startedAt),
+      error,
+    });
+    const response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    response.headers.set(REQUEST_ID_HEADER, requestId);
+    return response;
   }
 }
 
