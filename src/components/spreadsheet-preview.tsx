@@ -6,8 +6,10 @@ import { COMPACT_PREVIEW_ROWS } from "@/shared/constants/upload";
 
 interface SpreadsheetPreviewProps {
   readonly fileName: string;
-  readonly extension: "csv" | "xlsx";
-  readonly target: "csv" | "xlsx";
+  /** Extensão de origem para o badge "de → para". Geralmente `csv`/`xlsx`, mas também aceita
+   * `json` quando a prévia é do resultado de uma conversão `json → csv`. */
+  readonly extension: string;
+  readonly target: string;
   readonly sizeMb: number;
   readonly totalRows: number;
   readonly columns: number;

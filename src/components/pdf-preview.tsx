@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface PdfPreviewProps {
-  readonly file: File;
+  /** `File` de entrada ou `Blob` de um resultado de conversão — ambos expõem `arrayBuffer()`. */
+  readonly file: Blob;
   readonly fileName: string;
   readonly sizeMb: number;
-  readonly pageCount: number;
-  readonly textSample: string;
+  /** Quando omitido (prévia de um resultado, sem leitura prévia no servidor), é derivado do próprio PDF. */
+  readonly pageCount?: number | null;
+  readonly textSample?: string;
   readonly target: string;
 }
 
@@ -20,12 +22,13 @@ export function PdfPreview({
   file,
   fileName,
   sizeMb,
-  pageCount,
-  textSample,
+  pageCount = null,
+  textSample = "",
   target,
 }: PdfPreviewProps) {
   const [status, setStatus] = useState<RenderStatus>("rendering");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [resolvedPageCount, setResolvedPageCount] = useState<number | null>(pageCount);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +43,7 @@ export function PdfPreview({
 
         const data = new Uint8Array(await file.arrayBuffer());
         const doc = await pdfjs.getDocument({ data }).promise;
+        if (pageCount === null && !cancelled) setResolvedPageCount(doc.numPages);
         const page = await doc.getPage(1);
         const base = page.getViewport({ scale: 1 });
         const scale = Math.min(2, 1000 / base.width);
@@ -64,9 +68,10 @@ export function PdfPreview({
     return () => {
       cancelled = true;
     };
-  }, [file]);
+  }, [file, pageCount]);
 
-  const pageLabel = pageCount === 1 ? "1 página" : `${pageCount} páginas`;
+  const pageCountLabel = resolvedPageCount ?? 0;
+  const pageLabel = pageCountLabel === 1 ? "1 página" : `${pageCountLabel} páginas`;
 
   return (
     <div className="rounded-2xl border border-line bg-bg-elev p-6">
@@ -112,7 +117,7 @@ export function PdfPreview({
 
       <dl className="mt-5 grid grid-cols-2 gap-3 text-center">
         <Stat label="Tamanho" value={`${sizeMb} MB`} />
-        <Stat label="Páginas" value={String(pageCount)} />
+        <Stat label="Páginas" value={String(pageCountLabel)} />
       </dl>
 
       <div className="mt-5">
