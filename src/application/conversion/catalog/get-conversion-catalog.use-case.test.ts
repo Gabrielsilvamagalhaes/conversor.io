@@ -36,10 +36,11 @@ describe("GetConversionCatalogUseCase", () => {
     expect(documents?.extensions).toEqual(["pdf", "docx"]);
   });
 
-  it("preserva as flags live (docx→pdf e pdf→docx como 'em breve')", () => {
+  it("preserva as flags live (pdf→docx como 'em breve'; docx→pdf já ativo)", () => {
     const documents = catalog.categories.find((c) => c.id === "documents");
     const emBreve = documents?.pairs.filter((p) => !p.live).map((p) => `${p.from}->${p.to}`);
-    expect(emBreve).toEqual(["docx->pdf", "pdf->docx"]);
+    expect(emBreve).toEqual(["pdf->docx"]);
     expect(documents?.pairs.find((p) => p.from === "pdf" && p.to === "txt")?.live).toBe(true);
+    expect(documents?.pairs.find((p) => p.from === "docx" && p.to === "pdf")?.live).toBe(true);
   });
 });
