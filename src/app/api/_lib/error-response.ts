@@ -7,6 +7,8 @@ import { MediaTooLargeError } from "@/domain/conversion/errors/media-too-large.e
 import { UnsupportedCodecError } from "@/domain/conversion/errors/unsupported-codec.error";
 import { UnsupportedConversionError } from "@/domain/conversion/errors/unsupported-conversion.error";
 import { VideoTooLongError } from "@/domain/conversion/errors/video-too-long.error";
+import { UnauthorizedError } from "@/domain/identity/errors/auth-errors";
+import type { LoggerPort } from "@/domain/observability/ports/logger.port";
 
 /** Erro de domínio mapeado para status HTTP + mensagem (pt-BR, vinda do próprio erro). */
 export interface MappedError {
@@ -33,17 +35,27 @@ export function mapDomainError(error: unknown): MappedError | null {
   if (error instanceof ConversionTimeoutError) {
     return { status: 408, message: error.message };
   }
+  if (error instanceof UnauthorizedError) {
+    return { status: 401, message: error.message };
+  }
   return null;
 }
 
 /**
  * Converte um erro capturado em `NextResponse` JSON. Erros de domínio conhecidos viram
- * `{ status, message }`; o resto vira 500 com `fallbackMessage`.
+ * `{ status, message }`; o resto vira 500 com `fallbackMessage`. Quando cai no 500 (erro
+ * não mapeado), registra o erro original via `logger` antes de responder — o cliente
+ * continua recebendo só a mensagem genérica, nunca o detalhe interno.
  */
-export function toErrorResponse(error: unknown, fallbackMessage: string): NextResponse {
+export function toErrorResponse(
+  error: unknown,
+  fallbackMessage: string,
+  logger?: LoggerPort,
+): NextResponse {
   const mapped = mapDomainError(error);
   if (mapped) {
     return NextResponse.json({ error: mapped.message }, { status: mapped.status });
   }
+  logger?.error({ event: "unhandled_error", status: 500, error });
   return NextResponse.json({ error: fallbackMessage }, { status: 500 });
 }

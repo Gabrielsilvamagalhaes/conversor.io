@@ -43,9 +43,13 @@ Wikimedia) como peça central, à maneira do Hermes/Nous. Mote de marca: **"Code
 | Categoria | Pares |
 | --- | --- |
 | Planilhas | `.xlsx` ↔ `.csv` |
-| Documentos | `.docx` → `.pdf`, `.pdf` → `.txt` |
-| Dados | `.json` ↔ `.csv` |
-| Mídia | vídeo (`.mp4`/`.webm`/`.mov`) → `.mp3`/`.wav` |
+| Documentos | `.docx` → `.pdf` (sem LibreOffice — mammoth + pdfmake), `.pdf` → `.txt` |
+| Dados | `.json` ↔ `.csv`, `.xlsx` → `.json` |
+| Mídia | vídeo (`.mp4`/`.webm`/`.mov`) → `.mp3`/`.wav` (roda no navegador via ffmpeg.wasm) |
+
+`.xlsx → .json` foi adicionado na Fase 2, fora do escopo fechado original do MVP — ver
+`/docs/04 - Conversoes/MVP - Conversões Iniciais.md`. `.pdf → .docx` está no catálogo mas
+ainda não é `live` ("em breve").
 
 Fora do MVP: transcrição com IA, conversões em lote, API pública, planos/monetização.
 
@@ -62,7 +66,9 @@ pnpm typecheck    # tsc --noEmit
 ```
 
 Gerenciador de pacotes: **pnpm**. Node fixado em **22** (`engines.node >=22`).
-Para conversões locais completas é preciso `ffmpeg` e LibreOffice (`soffice`) no PATH.
+Nenhum binário externo é necessário para conversões locais: vídeo → áudio roda com
+ffmpeg.wasm no navegador (não usa `ffmpeg` do sistema) e `docx → pdf` roda em JS puro
+(mammoth + pdfmake, não usa LibreOffice/`soffice`).
 
 ## Arquitetura — Clean Architecture + DDD
 
@@ -89,8 +95,10 @@ presentation  →  application  →  domain  ←  infrastructure
 
 ### Bounded Contexts
 
-- **Conversão** — agregado raiz `ConversionJob`; catálogo de pares, ciclo de vida
-  (`pending` → `processing` → `completed` | `failed`), arquivos temp de entrada/saída.
+- **Conversão** — agregado raiz `ConversionJob`; catálogo de pares. A conversão é síncrona
+  (bytes entram, bytes saem na mesma request), então o job nasce **já em estado terminal**:
+  só `completed` | `failed`, via as factories estáticas. Não existe `pending`/`processing`.
+  `storageKey`/`expiresAt` existem no agregado mas são sempre `null` até a Fase 3.
 - **Identidade** — agregado `AuthenticatedUser` (thin; Firebase é source of truth);
   resolve sessão e expõe `userId`.
 - Contextos se comunicam por application services / domain events — sem acoplar agregados
@@ -98,21 +106,28 @@ presentation  →  application  →  domain  ←  infrastructure
 
 ### Conversores
 
-Cada par de conversão = **um adapter** implementando `FileConverterPort`, registrado no
-`ConverterRegistry`. Ex.: `XlsxToCsvAdapter`, `FfmpegVideoToAudioAdapter`. Adicionar um
-formato = adicionar um adapter, sem reescrever o core.
+Cada par de conversão server-side = **um adapter** implementando `FileConverterPort`,
+registrado no `ConverterRegistry`. Ex.: `XlsxToCsvAdapter`, `DocxToPdfAdapter`. Adicionar um
+formato = adicionar um adapter, sem reescrever o core. Vídeo → áudio é exceção: roda no
+navegador (ffmpeg.wasm), não tem adapter nem entra no `ConverterRegistry`.
 
 ## Estrutura de pastas (`src/`)
 
 ```
 src/
 ├── app/              # Presentation (App Router): pages, layouts, api/route handlers, middleware
-├── domain/           # conversion/ · identity/ · catalog/  (entities, value-objects, errors, ports)
+├── components/       # Presentation: componentes React · dashboard/ · dropzone/ · ui/
+├── domain/           # conversion/ · identity/ · observability/ (entities, value-objects, errors, ports)
 ├── application/      # use cases por contexto + services/ (converter-registry)
-├── infrastructure/   # auth/ · storage/ · persistence/ · converters/ · ffmpeg/
+├── infrastructure/   # auth/ · conversion/ (adapters de conversão) · observability/ · persistence/ (Firestore)
 ├── di/               # container.ts (composition root) · env.ts (validação zod)
 └── shared/           # types/ · utils/ · constants/
 ```
+
+`src/infrastructure/persistence/` guarda o adapter Firestore do histórico de conversões.
+`src/infrastructure/observability/` e `src/domain/observability/` guardam `LoggerPort` e
+`ConsoleJsonLogger` — ver [[Decisão - Observabilidade e Logs Estruturados]] em `/docs`.
+Ainda não existe `src/infrastructure/storage/` (Fase 3, storage de arquivo + TTL).
 
 Path alias: `@/*` → `./src/*`. **Proibido** `@/infrastructure` importado de `@/domain`.
 

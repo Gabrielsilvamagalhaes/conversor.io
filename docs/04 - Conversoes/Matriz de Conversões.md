@@ -25,7 +25,7 @@ Catálogo completo (atual + planejado) do [[Projeto Com Hans]].
 | odt | pdf | 📅 | v0.3 |
 | md | pdf | 📅 | v0.3 |
 | pdf | docx | 📅 | v0.4 |
-| xlsx | json | 📅 | v0.2 |
+| xlsx | json | ✅ | Fase 2 |
 
 ## Mídia
 
@@ -52,8 +52,17 @@ Catálogo completo (atual + planejado) do [[Projeto Com Hans]].
 | zip | extrair | 📅 | v0.3 |
 | múltiplos | zip | 📅 | v0.3 |
 
+## Notas de implementação por par
+
+- **`docx → pdf`** — sem LibreOffice: mammoth (docx→HTML) + mapper próprio
+  (htmlparser2 → pdfmake). Layout reconstruído, não replicado (fontes/colunas/cabeçalho
+  não são preservados). Ver [[Decisão - Conversão docx para pdf sem LibreOffice]].
+- **`xlsx → json`** — streaming via ExcelJS, categoria `data`, engine `server`.
+- **`pdf → docx`** — segue `📅` (`live: false` no catálogo); aparece na UI como "em breve".
+
 ## Implementação
 
-Cada linha ✅/📅 vira entrada no `ConversionCatalog` + adapter em `src/infrastructure/converters/`.
+Cada linha ✅/📅 vira entrada no `ConversionCatalog` (`src/domain/conversion/value-objects/conversion-pair.ts`)
++ adapter em `src/infrastructure/conversion/converters/`.
 
 Progressão detalhada: [[Progressão Mensal]].

@@ -82,11 +82,11 @@ describe("ConvertFileUseCase", () => {
     expect(result.fileName).toBe("dados.xlsx");
   });
 
-  it("rejeita par 'em breve' (docx→pdf) mesmo com adapter registrado", async () => {
-    const registry = new ConverterRegistry([fakeConverter("docx", "pdf", new Uint8Array())]);
+  it("rejeita par 'em breve' (pdf→docx) mesmo com adapter registrado", async () => {
+    const registry = new ConverterRegistry([fakeConverter("pdf", "docx", new Uint8Array())]);
     const useCase = new ConvertFileUseCase(registry);
     await expect(
-      useCase.execute({ fileName: "a.docx", target: "pdf", bytes: new Uint8Array() }),
+      useCase.execute({ fileName: "a.pdf", target: "docx", bytes: new Uint8Array() }),
     ).rejects.toBeInstanceOf(UnsupportedConversionError);
   });
 

@@ -13,11 +13,12 @@ describe("conversion-pair", () => {
     expect(isSupportedPair("xlsx", "csv")).toBe(true);
     expect(isSupportedPair("csv", "json")).toBe(true);
     expect(isSupportedPair("json", "csv")).toBe(true);
+    expect(isSupportedPair("xlsx", "json")).toBe(true);
     expect(isSupportedPair("pdf", "txt")).toBe(true);
+    expect(isSupportedPair("docx", "pdf")).toBe(true);
   });
 
   it("rejeita pares 'em breve' (live: false) mesmo estando no catálogo", () => {
-    expect(isSupportedPair("docx", "pdf")).toBe(false);
     expect(isSupportedPair("pdf", "docx")).toBe(false);
   });
 
@@ -30,13 +31,34 @@ describe("conversion-pair", () => {
     expect(liveTargetsFor("csv", "spreadsheets")).toEqual(["xlsx"]);
     expect(liveTargetsFor("csv", "data")).toEqual(["json"]);
     expect(liveTargetsFor("pdf", "documents")).toEqual(["txt"]);
-    expect(liveTargetsFor("docx", "documents")).toEqual([]);
+    expect(liveTargetsFor("docx", "documents")).toEqual(["pdf"]);
+  });
+
+  it("liveTargetsFor desambigua xlsx (spreadsheets vs. data), como já ocorre com csv", () => {
+    expect(liveTargetsFor("xlsx", "spreadsheets")).toEqual(["csv"]);
+    expect(liveTargetsFor("xlsx", "data")).toEqual(["json"]);
+  });
+
+  it("xlsx aparece nas duas categorias do catálogo, cada uma com seu próprio par", () => {
+    const inSpreadsheets = CONVERSION_PAIRS.filter(
+      (p) => p.from === "xlsx" && p.category === "spreadsheets",
+    );
+    const inData = CONVERSION_PAIRS.filter((p) => p.from === "xlsx" && p.category === "data");
+    expect(inSpreadsheets).toEqual([
+      { from: "xlsx", to: "csv", category: "spreadsheets", live: true, engine: "server" },
+    ]);
+    expect(inData).toEqual([
+      { from: "xlsx", to: "json", category: "data", live: true, engine: "server" },
+    ]);
   });
 
   it("pairsForCategory inclui os 'em breve'", () => {
     const docs = pairsForCategory("documents");
     expect(docs.map((p) => `${p.from}->${p.to}`)).toEqual(["pdf->txt", "docx->pdf", "pdf->docx"]);
-    expect(docs.filter((p) => !p.live)).toHaveLength(2);
+    expect(docs.filter((p) => !p.live)).toHaveLength(1);
+
+    const data = pairsForCategory("data");
+    expect(data.map((p) => `${p.from}->${p.to}`)).toEqual(["csv->json", "json->csv", "xlsx->json"]);
   });
 
   it("catálogo cobre as quatro categorias", () => {

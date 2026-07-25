@@ -1,5 +1,6 @@
 import type { AuthenticatedUser } from "@/domain/identity/entities/authenticated-user";
 import type { AuthSessionPort } from "@/domain/identity/ports/auth-session.port";
+import type { LoggerPort } from "@/domain/observability/ports/logger.port";
 
 export interface GetSessionInput {
   readonly sessionCookie: string | undefined;
@@ -11,13 +12,21 @@ export interface GetSessionInput {
  * conveniente para Server Components e o `proxy.ts`.
  */
 export class GetSessionUseCase {
-  constructor(private readonly authSession: AuthSessionPort) {}
+  constructor(
+    private readonly authSession: AuthSessionPort,
+    private readonly logger?: LoggerPort,
+  ) {}
 
   async execute(input: GetSessionInput): Promise<AuthenticatedUser | null> {
     if (!input.sessionCookie) return null;
     try {
       return await this.authSession.verifySessionCookie(input.sessionCookie);
-    } catch {
+    } catch (error) {
+      this.logger?.warn({
+        event: "session_verification_failed",
+        service: "identity-service",
+        error,
+      });
       return null;
     }
   }

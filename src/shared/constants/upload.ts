@@ -26,3 +26,9 @@ export const MAX_PDF_TEXT_SAMPLE = 2000;
 
 /** Máximo de caracteres da amostra pretty-printed de JSON na prévia. */
 export const MAX_JSON_SAMPLE = 4000;
+
+/** Máximo de caracteres da amostra de texto de docx (fallback da prévia). */
+export const MAX_DOCX_TEXT_SAMPLE = 2000;
+
+/** Máximo de caracteres da amostra de texto no painel de resultado (saída .txt). */
+export const MAX_RESULT_TEXT_SAMPLE = 2000;
