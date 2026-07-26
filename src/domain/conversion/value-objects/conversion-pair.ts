@@ -1,7 +1,7 @@
 import type { AcceptedExtension } from "./accepted-format";
 
 /** Categoria de conversão exibida na UI (aba). */
-export type ConversionCategory = "spreadsheets" | "data" | "documents" | "media";
+export type ConversionCategory = "spreadsheets" | "data" | "documents" | "images" | "media";
 
 /**
  * Onde a conversão executa:
@@ -36,7 +36,14 @@ export const CONVERSION_PAIRS: readonly ConversionPair[] = [
   { from: "xlsx", to: "json", category: "data", live: true, engine: "server" },
   { from: "pdf", to: "txt", category: "documents", live: true, engine: "server" },
   { from: "docx", to: "pdf", category: "documents", live: true, engine: "server" },
+  { from: "md", to: "pdf", category: "documents", live: true, engine: "server" },
   { from: "pdf", to: "docx", category: "documents", live: false, engine: "server" },
+  { from: "png", to: "jpg", category: "images", live: true, engine: "server" },
+  { from: "jpg", to: "png", category: "images", live: true, engine: "server" },
+  { from: "webp", to: "png", category: "images", live: true, engine: "server" },
+  { from: "webp", to: "jpg", category: "images", live: true, engine: "server" },
+  { from: "png", to: "webp", category: "images", live: true, engine: "server" },
+  { from: "jpg", to: "webp", category: "images", live: true, engine: "server" },
   { from: "mp4", to: "mp3", category: "media", live: true, engine: "client" },
   { from: "mp4", to: "wav", category: "media", live: true, engine: "client" },
   { from: "webm", to: "mp3", category: "media", live: true, engine: "client" },

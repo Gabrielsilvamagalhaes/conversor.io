@@ -9,6 +9,7 @@ import { sanitizeBaseName } from "@/components/dropzone/file-naming";
 import { ResultPanel } from "@/components/dropzone/result-panel";
 import { useConversion } from "@/components/dropzone/use-conversion";
 import { FileInfoCard } from "@/components/file-info-card";
+import { ImagePreview } from "@/components/image-preview";
 import { JsonPreview } from "@/components/json-preview";
 import { PdfPreview } from "@/components/pdf-preview";
 import { SpreadsheetPreview } from "@/components/spreadsheet-preview";
@@ -137,6 +138,12 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
                   : ""}{" "}
                 · máx. {category.maxSizeMb} MB
               </p>
+              {activeCategory === "images" ? (
+                <p className="mt-1.5 text-xs text-muted">
+                  Imagens acima de {category.maxSizeMb} MB são reduzidas no seu navegador antes de
+                  subir.
+                </p>
+              ) : null}
               {status === "reading" ? (
                 <motion.p
                   className="mt-5 text-sm text-gold"
@@ -158,7 +165,16 @@ export function FileDropzone({ catalog }: FileDropzoneProps) {
             exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
             className="space-y-5"
           >
-            {preview.kind === "media" && preview.videoUrl ? (
+            {preview.kind === "image" && preview.imageUrl ? (
+              <ImagePreview
+                src={preview.imageUrl}
+                fileName={preview.fileName}
+                extension={preview.extension}
+                target={target ?? "—"}
+                sizeMb={preview.sizeMb}
+                originalSizeMb={preview.originalSizeMb}
+              />
+            ) : preview.kind === "media" && preview.videoUrl ? (
               <VideoPreview
                 src={preview.videoUrl}
                 fileName={preview.fileName}

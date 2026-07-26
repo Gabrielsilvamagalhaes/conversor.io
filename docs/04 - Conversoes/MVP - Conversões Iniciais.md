@@ -43,6 +43,14 @@ Fora dos 5 formatos base acima, a Fase 2 também entregou `xlsx → json` (categ
 streaming via ExcelJS) — não fazia parte do MVP fechado, mas coube junto por reaproveitar
 o mesmo leitor de planilha do par `xlsx → csv`. Ver [[Matriz de Conversões]].
 
+A mesma fase entregou, também fora do escopo fechado da v0.1, a categoria **Imagens**
+(`png↔jpg`, `webp→png`/`jpg`, `png`/`jpg`→`webp` — 6 pares via sharp) e `md → pdf` (via
+marked, reaproveitando o mapper `html-to-pdfmake.ts` e o singleton pdfmake que já serviam
+`docx → pdf`). Nenhum dos dois era um formato "solicitado" da tabela acima; coube junto por
+reaproveitamento de infraestrutura já existente (o mapper HTML→pdfmake, no caso de `md`) ou
+por completar uma categoria nova já prevista na [[Matriz de Conversões]] (imagens). Ver
+[[Decisão - Conversão de imagens com sharp]].
+
 ## UX mínima
 
 1. Selecionar categoria (Planilha, Documento, Dados, Vídeo).

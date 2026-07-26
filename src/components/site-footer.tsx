@@ -1,9 +1,16 @@
 import Link from "next/link";
+import { getContainer } from "@/di/container";
 
-const FORMATS = ["csv ↔ xlsx", "docx → pdf", "pdf → txt", "json ↔ csv", "vídeo → áudio"];
+/**
+ * Rodapé: colunas + contato + barra legal. Arte é domínio público (Wikimedia).
+ *
+ * A coluna de categorias sai do catálogo real (Server Component, container `server-only`) em vez
+ * de uma lista escrita à mão — era a terceira cópia da mesma informação no projeto, e a que mais
+ * envelhecia sem ninguém perceber.
+ */
+export async function SiteFooter() {
+  const { categories } = getContainer().getConversionCatalog.execute();
 
-/** Rodapé: colunas + contato + barra legal. Arte é domínio público (Wikimedia). */
-export function SiteFooter() {
   return (
     <footer className="border-t border-line bg-bg-elev">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-12 md:grid-cols-4">
@@ -16,11 +23,16 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <nav aria-label="Formatos">
-          <h2 className="text-xs uppercase tracking-widest text-gold">Formatos</h2>
+        <nav aria-label="Categorias de conversão">
+          <h2 className="text-xs uppercase tracking-widest text-gold">Categorias</h2>
           <ul className="mt-3 space-y-1.5 text-sm text-muted">
-            {FORMATS.map((f) => (
-              <li key={f}>{f}</li>
+            {categories.map((category) => (
+              <li key={category.id}>
+                {category.label}{" "}
+                <span className="text-muted/70">
+                  ({category.pairs.filter((pair) => pair.live).length})
+                </span>
+              </li>
             ))}
           </ul>
         </nav>

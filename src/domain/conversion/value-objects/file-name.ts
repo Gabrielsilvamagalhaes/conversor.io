@@ -1,6 +1,10 @@
+import { normalizeExtension } from "./accepted-format";
+
 /**
  * Nome de arquivo sanitizado. Remove diretórios (anti path traversal) e
- * caracteres perigosos; expõe a extensão normalizada em minúsculas.
+ * caracteres perigosos; expõe a extensão normalizada (minúsculas + alias, ex.:
+ * `.jpeg` → `jpg`). `value` preserva o nome original sanitizado — só `extension`
+ * passa pela normalização, para que o par `jpg` do catálogo reconheça `foto.jpeg`.
  */
 export class FileName {
   private constructor(
@@ -18,7 +22,7 @@ export class FileName {
       throw new Error("Nome de arquivo inválido.");
     }
     const dot = sanitized.lastIndexOf(".");
-    const extension = dot > 0 ? sanitized.slice(dot + 1).toLowerCase() : "";
+    const extension = dot > 0 ? normalizeExtension(sanitized.slice(dot + 1)) : "";
     return new FileName(sanitized, extension);
   }
 

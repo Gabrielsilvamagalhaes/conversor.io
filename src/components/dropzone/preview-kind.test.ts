@@ -23,6 +23,13 @@ describe("resolveResultPreviewKind", () => {
     expect(resolveResultPreviewKind("wav")).toBe("audio");
   });
 
+  it("png, jpg, jpeg e webp → image", () => {
+    expect(resolveResultPreviewKind("png")).toBe("image");
+    expect(resolveResultPreviewKind("jpg")).toBe("image");
+    expect(resolveResultPreviewKind("jpeg")).toBe("image");
+    expect(resolveResultPreviewKind("webp")).toBe("image");
+  });
+
   it("xlsx → xlsx (sem prévia de conteúdo)", () => {
     expect(resolveResultPreviewKind("xlsx")).toBe("xlsx");
   });

@@ -8,10 +8,12 @@ export type ResultPreviewKind =
   | "json"
   | "pdf"
   | "audio"
+  | "image"
   | "xlsx"
   | "generic";
 
 const AUDIO_EXTENSIONS = new Set(["mp3", "wav"]);
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp"]);
 
 /** Resolve o tipo de prévia do resultado a partir da extensão de destino (case-insensitive). */
 export function resolveResultPreviewKind(extension: string): ResultPreviewKind {
@@ -22,6 +24,7 @@ export function resolveResultPreviewKind(extension: string): ResultPreviewKind {
   if (ext === "json") return "json";
   if (ext === "pdf") return "pdf";
   if (AUDIO_EXTENSIONS.has(ext)) return "audio";
+  if (IMAGE_EXTENSIONS.has(ext)) return "image";
   if (ext === "xlsx") return "xlsx";
   return "generic";
 }

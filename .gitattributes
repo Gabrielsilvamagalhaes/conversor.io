@@ -10,3 +10,8 @@
 *.woff binary
 *.woff2 binary
 *.pdf binary
+*.ttf binary
+*.otf binary
+*.webp binary
+*.docx binary
+*.xlsx binary

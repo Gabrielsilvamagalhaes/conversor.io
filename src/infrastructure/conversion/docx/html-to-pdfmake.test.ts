@@ -155,6 +155,18 @@ describe("htmlToPdfContent", () => {
   it("entidades HTML são decodificadas", () => {
     expect(htmlToPdfContent("<p>A &amp; B &lt;3&gt;</p>")).toEqual([{ text: ["A & B <3>"] }]);
   });
+
+  it("<script> é descartado junto com o conteúdo, não promovido como texto", () => {
+    const content = htmlToPdfContent("<script>alert(1)</script><p>Olá</p>");
+    expect(content).toEqual([{ text: ["Olá"] }]);
+    expect(JSON.stringify(content)).not.toContain("alert(1)");
+  });
+
+  it("<style> é descartado junto com o conteúdo, não promovido como texto", () => {
+    const content = htmlToPdfContent("<style>.a { color: red; }</style><p>Olá</p>");
+    expect(content).toEqual([{ text: ["Olá"] }]);
+    expect(JSON.stringify(content)).not.toContain("color: red");
+  });
 });
 
 describe("buildDocDefinition", () => {

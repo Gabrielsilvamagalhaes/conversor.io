@@ -57,5 +57,11 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
+      - name: Build
+        run: pnpm build
+
+      - name: Verify font assets
+        run: node scripts/verify-font-assets.mjs
+
       - name: Run E2E
         run: pnpm e2e

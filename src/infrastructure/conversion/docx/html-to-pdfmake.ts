@@ -47,6 +47,15 @@ const KNOWN_TAGS = new Set([
 
 const BLOCK_TAGS = new Set(["h1", "h2", "h3", "p", "ul", "ol", "table", "img"]);
 
+/**
+ * Tags cujo conteúdo nunca deve virar texto visível no PDF — descartadas junto com os filhos
+ * (ao contrário de uma tag desconhecida comum, cujos filhos são promovidos). Sem isso,
+ * `<script>alert(1)</script>` num markdown/HTML de origem imprimiria "alert(1)" no PDF: nada
+ * executa (não há XSS — `convertImage` só aceita `src` como data URI e `setUrlAccessPolicy`
+ * bloqueia fetch remoto), mas o texto do script/estilo aparecia como lixo na saída.
+ */
+const DROPPED_TAGS = new Set(["script", "style", "head", "title", "noscript"]);
+
 /** Largura/altura úteis da página A4 com `pageMargins: [48, 56, 48, 56]` — usadas como teto do `fit` de imagens. */
 const IMAGE_FIT: [number, number] = [499, 729];
 
@@ -117,12 +126,18 @@ function parseHtml(html: string): HtmlElementNode {
   return root;
 }
 
-/** Promove os filhos de tags desconhecidas ao nível do pai; ignora só a tag em si, recursivamente. */
+/**
+ * Promove os filhos de tags desconhecidas ao nível do pai; ignora só a tag em si, recursivamente.
+ * Exceção: tags em `DROPPED_TAGS` (`script`, `style`...) são descartadas **com** os filhos —
+ * o conteúdo delas nunca é texto para exibir, então promover os filhos seria lixo visível no PDF.
+ */
 function flattenUnknownTags(nodes: HtmlNode[]): HtmlNode[] {
   const out: HtmlNode[] = [];
   for (const node of nodes) {
     if (node.type === "text") {
       out.push(node);
+    } else if (DROPPED_TAGS.has(node.tag)) {
+      // Descarta a tag e os filhos — não promove.
     } else if (KNOWN_TAGS.has(node.tag)) {
       out.push({ ...node, children: flattenUnknownTags(node.children) });
     } else {

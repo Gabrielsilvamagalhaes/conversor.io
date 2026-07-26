@@ -9,21 +9,14 @@ import { PreviewDocxUseCase } from "@/application/conversion/preview-docx.use-ca
 import { PreviewJsonUseCase } from "@/application/conversion/preview-json.use-case";
 import { PreviewPdfUseCase } from "@/application/conversion/preview-pdf.use-case";
 import { PreviewSpreadsheetUseCase } from "@/application/conversion/preview-spreadsheet.use-case";
-import { ConverterRegistry } from "@/application/conversion/services/converter-registry";
 import { ValidateUploadUseCase } from "@/application/conversion/validate-upload.use-case";
 import { CreateSessionUseCase } from "@/application/identity/create-session.use-case";
 import { GetSessionUseCase } from "@/application/identity/get-session.use-case";
 import { RevokeSessionUseCase } from "@/application/identity/revoke-session.use-case";
+import { buildConverterRegistry } from "@/di/converters";
 import { loadUploadConfig } from "@/di/env";
 import type { LoggerPort } from "@/domain/observability/ports/logger.port";
 import { FirebaseAuthAdapter } from "@/infrastructure/auth/firebase-auth.adapter";
-import { CsvToJsonAdapter } from "@/infrastructure/conversion/converters/csv-to-json.adapter";
-import { CsvToXlsxAdapter } from "@/infrastructure/conversion/converters/csv-to-xlsx.adapter";
-import { DocxToPdfAdapter } from "@/infrastructure/conversion/converters/docx-to-pdf.adapter";
-import { JsonToCsvAdapter } from "@/infrastructure/conversion/converters/json-to-csv.adapter";
-import { PdfToTxtAdapter } from "@/infrastructure/conversion/converters/pdf-to-txt.adapter";
-import { XlsxToCsvAdapter } from "@/infrastructure/conversion/converters/xlsx-to-csv.adapter";
-import { XlsxToJsonAdapter } from "@/infrastructure/conversion/converters/xlsx-to-json.adapter";
 import { MammothDocxReader } from "@/infrastructure/conversion/docx/mammoth-docx-reader";
 import { JsonReader } from "@/infrastructure/conversion/json/json-reader";
 import { MagicBytesDetector } from "@/infrastructure/conversion/magic-bytes-detector";
@@ -70,15 +63,7 @@ export function getContainer(): Container {
   const pdfReader = new UnpdfPdfReader();
   const jsonReader = new JsonReader();
   const docxReader = new MammothDocxReader();
-  const converterRegistry = new ConverterRegistry([
-    new CsvToXlsxAdapter(),
-    new XlsxToCsvAdapter(),
-    new CsvToJsonAdapter(),
-    new JsonToCsvAdapter(),
-    new PdfToTxtAdapter(),
-    new DocxToPdfAdapter(),
-    new XlsxToJsonAdapter(),
-  ]);
+  const converterRegistry = buildConverterRegistry();
 
   // `getFirestoreDb` é passada como referência (não chamada aqui). A inicialização do
   // Firebase Admin só pode acontecer em runtime, com o env validado — o `next build` roda
