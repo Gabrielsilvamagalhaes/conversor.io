@@ -18,6 +18,10 @@ const CONTENT_TYPES: Record<string, string> = {
   txt: "text/plain; charset=utf-8",
   pdf: "application/pdf",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  png: "image/png",
+  jpg: "image/jpeg",
+  webp: "image/webp",
+  md: "text/markdown; charset=utf-8",
 };
 
 function extensionOf(fileName: string): string {

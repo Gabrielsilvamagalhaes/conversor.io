@@ -54,16 +54,35 @@ describe("conversion-pair", () => {
 
   it("pairsForCategory inclui os 'em breve'", () => {
     const docs = pairsForCategory("documents");
-    expect(docs.map((p) => `${p.from}->${p.to}`)).toEqual(["pdf->txt", "docx->pdf", "pdf->docx"]);
+    expect(docs.map((p) => `${p.from}->${p.to}`)).toEqual([
+      "pdf->txt",
+      "docx->pdf",
+      "md->pdf",
+      "pdf->docx",
+    ]);
     expect(docs.filter((p) => !p.live)).toHaveLength(1);
+    expect(docs[docs.length - 1]?.live).toBe(false);
 
     const data = pairsForCategory("data");
     expect(data.map((p) => `${p.from}->${p.to}`)).toEqual(["csv->json", "json->csv", "xlsx->json"]);
   });
 
-  it("catálogo cobre as quatro categorias", () => {
+  it("pairsForCategory cobre a categoria images", () => {
+    const images = pairsForCategory("images");
+    expect(images.map((p) => `${p.from}->${p.to}`)).toEqual([
+      "png->jpg",
+      "jpg->png",
+      "webp->png",
+      "webp->jpg",
+      "png->webp",
+      "jpg->webp",
+    ]);
+    expect(images.every((p) => p.live && p.engine === "server")).toBe(true);
+  });
+
+  it("catálogo cobre as cinco categorias", () => {
     const categories = new Set(CONVERSION_PAIRS.map((p) => p.category));
-    expect(categories).toEqual(new Set(["spreadsheets", "data", "documents", "media"]));
+    expect(categories).toEqual(new Set(["spreadsheets", "data", "documents", "images", "media"]));
   });
 
   it("isSupportedPair (servidor) rejeita pares de mídia com engine client", () => {

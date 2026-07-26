@@ -1,6 +1,7 @@
 /**
  * Extensões aceitas no catálogo.
- * Planilhas: `.csv`, `.xlsx` · Dados: `.json`, `.csv` · Documentos: `.pdf`, `.docx`, `.txt`.
+ * Planilhas: `.csv`, `.xlsx` · Dados: `.json`, `.csv` · Documentos: `.pdf`, `.docx`, `.txt`, `.md`.
+ * Imagens: `.png`, `.jpg`, `.webp`.
  * Mídia: `.mp4`/`.webm`/`.mov` (origem, vídeo) → `.mp3`/`.wav` (destino, áudio).
  * `.txt` é apenas destino (saída de `pdf → txt`), nunca origem de upload.
  */
@@ -11,6 +12,10 @@ export const ACCEPTED_EXTENSIONS = [
   "pdf",
   "docx",
   "txt",
+  "md",
+  "png",
+  "jpg",
+  "webp",
   "mp4",
   "webm",
   "mov",
@@ -38,4 +43,29 @@ export type AudioExtension = (typeof AUDIO_EXTENSIONS)[number];
 
 export function isAudioExtension(extension: string): extension is AudioExtension {
   return (AUDIO_EXTENSIONS as readonly string[]).includes(extension);
+}
+
+/** Extensões de imagem aceitas (origem e destino da categoria `images`). */
+export const IMAGE_EXTENSIONS = ["png", "jpg", "webp"] as const;
+export type ImageExtension = (typeof IMAGE_EXTENSIONS)[number];
+
+export function isImageExtension(extension: string): extension is ImageExtension {
+  return (IMAGE_EXTENSIONS as readonly string[]).includes(extension);
+}
+
+/**
+ * Aliases de extensão: a chave é aceita como entrada e tratada como o valor.
+ * `.jpeg` é uma grafia comum na web para o mesmo formato de `.jpg` — sem esse alias,
+ * um upload de `foto.jpeg` bateria em "extensão não suportada", o que pareceria bug
+ * para quem não sabe que `.jpg`/`.jpeg` são o mesmo container JPEG.
+ */
+export const EXTENSION_ALIASES = { jpeg: "jpg" } as const;
+
+/**
+ * Normaliza uma extensão (lowercase + resolução de alias) antes de checar contra o
+ * catálogo. Ex.: `"JPEG"` → `"jpg"`. Extensões sem alias retornam apenas em minúsculas.
+ */
+export function normalizeExtension(ext: string): string {
+  const lower = ext.toLowerCase();
+  return (EXTENSION_ALIASES as Record<string, string>)[lower] ?? lower;
 }

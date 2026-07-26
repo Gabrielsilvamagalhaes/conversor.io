@@ -1,3 +1,4 @@
+import { EXTENSION_ALIASES } from "@/domain/conversion/value-objects/accepted-format";
 import {
   type ConversionCategory,
   type ConversionEngine,
@@ -29,12 +30,27 @@ export interface ConversionCatalogDto {
   readonly categories: CatalogCategoryDto[];
 }
 
-/** Rótulos pt-BR e ordem de exibição das categorias (detalhe de apresentação). */
-const CATEGORY_LABELS: readonly { id: ConversionCategory; label: string }[] = [
-  { id: "spreadsheets", label: "Planilhas" },
-  { id: "data", label: "Dados" },
-  { id: "documents", label: "Documentos" },
-  { id: "media", label: "Mídia" },
+/**
+ * Rótulos pt-BR das categorias (detalhe de apresentação). `Record<ConversionCategory, string>`
+ * é intencional: hoje, uma categoria nova sem rótulo aqui simplesmente sumia da UI sem
+ * nenhum erro (o array antigo não cobria o tipo); com o `Record`, esquecer uma categoria
+ * vira erro de compilação (`tsc --noEmit`) em vez de bug silencioso em produção.
+ */
+const CATEGORY_LABELS: Record<ConversionCategory, string> = {
+  spreadsheets: "Planilhas",
+  data: "Dados",
+  documents: "Documentos",
+  images: "Imagens",
+  media: "Mídia",
+};
+
+/** Ordem de exibição das categorias na UI (abas). */
+const CATEGORY_ORDER: readonly ConversionCategory[] = [
+  "spreadsheets",
+  "data",
+  "documents",
+  "images",
+  "media",
 ];
 
 /**
@@ -45,9 +61,16 @@ export class GetConversionCatalogUseCase {
   constructor(private readonly maxDocumentSizeMb: number) {}
 
   execute(): ConversionCatalogDto {
-    const categories = CATEGORY_LABELS.map(({ id, label }) => {
+    const categories = CATEGORY_ORDER.map((id) => {
+      const label = CATEGORY_LABELS[id];
       const pairs = pairsForCategory(id);
-      const extensions = [...new Set(pairs.map((pair) => pair.from))];
+      const fromExtensions = new Set(pairs.map((pair) => pair.from));
+      // Inclui aliases (ex.: `jpeg` ao lado de `jpg`) no `accept` do input de arquivo —
+      // sem isso o seletor de arquivos do navegador não deixa escolher `.jpeg`.
+      const aliasExtensions = Object.entries(EXTENSION_ALIASES)
+        .filter(([, canonical]) => fromExtensions.has(canonical))
+        .map(([alias]) => alias);
+      const extensions = [...fromExtensions, ...aliasExtensions];
       return {
         id,
         label,

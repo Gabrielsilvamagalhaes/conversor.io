@@ -25,6 +25,14 @@ describe("FileName", () => {
     expect(FileName.create("semponto").extension).toBe("");
   });
 
+  it("normaliza .jpeg para jpg (alias)", () => {
+    expect(FileName.create("foto.jpeg").extension).toBe("jpg");
+  });
+
+  it("normaliza extensão em maiúsculas", () => {
+    expect(FileName.create("imagem.PNG").extension).toBe("png");
+  });
+
   describe("sanitizeBase", () => {
     it("mantém nome-base válido", () => {
       expect(FileName.sanitizeBase("relatorio-final_2025")).toBe("relatorio-final_2025");

@@ -11,6 +11,12 @@ const zipDetector: FileTypeDetectorPort = {
 const pdfDetector: FileTypeDetectorPort = {
   detect: () => ({ isBinary: true, signature: "pdf" }),
 };
+const pngDetector: FileTypeDetectorPort = {
+  detect: () => ({ isBinary: true, signature: "png" }),
+};
+const webpDetector: FileTypeDetectorPort = {
+  detect: () => ({ isBinary: true, signature: "webp" }),
+};
 
 function bytes(text: string): Uint8Array {
   return new TextEncoder().encode(text);
@@ -112,6 +118,45 @@ describe("ValidateUploadUseCase", () => {
   it("rejeita arquivo sem extensão", () => {
     const useCase = new ValidateUploadUseCase(textDetector, MAX);
     expect(() => useCase.execute({ fileName: "nodotfile", size: 4, bytes: bytes("abcd") })).toThrow(
+      "inválido",
+    );
+  });
+
+  it("aceita um png com assinatura png", () => {
+    const useCase = new ValidateUploadUseCase(pngDetector, MAX);
+    const result = useCase.execute({ fileName: "foto.png", size: 2048, bytes: bytes("\x89PNG") });
+    expect(result.accepted).toBe(true);
+    expect(result.extension).toBe("png");
+  });
+
+  it("rejeita png cujo conteúdo é um container zip", () => {
+    const useCase = new ValidateUploadUseCase(zipDetector, MAX);
+    expect(() =>
+      useCase.execute({ fileName: "falso.png", size: 12, bytes: bytes("PK..") }),
+    ).toThrow("inválido");
+  });
+
+  it("aceita um webp com assinatura webp", () => {
+    const useCase = new ValidateUploadUseCase(webpDetector, MAX);
+    const result = useCase.execute({ fileName: "foto.webp", size: 2048, bytes: bytes("RIFF") });
+    expect(result.accepted).toBe(true);
+    expect(result.extension).toBe("webp");
+  });
+
+  it("aceita um md de texto válido", () => {
+    const useCase = new ValidateUploadUseCase(textDetector, MAX);
+    const result = useCase.execute({
+      fileName: "notas.md",
+      size: 12,
+      bytes: bytes("# Título\n\ntexto"),
+    });
+    expect(result.accepted).toBe(true);
+    expect(result.extension).toBe("md");
+  });
+
+  it("rejeita md com bytes binários (ex.: UTF-16 com byte NUL)", () => {
+    const useCase = new ValidateUploadUseCase(zipDetector, MAX);
+    expect(() => useCase.execute({ fileName: "notas.md", size: 12, bytes: bytes("PK..") })).toThrow(
       "inválido",
     );
   });

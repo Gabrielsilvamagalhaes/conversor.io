@@ -12,7 +12,9 @@ import { hashFileName } from "@/infrastructure/observability/redact";
 export const runtime = "nodejs";
 
 // Mídia não passa por aqui: o vídeo é lido e convertido no navegador (ffmpeg.wasm).
-const CATEGORIES: readonly ConversionCategory[] = ["spreadsheets", "data", "documents"];
+// `images` não tem reader de amostra server-side (sem preview textual); os campos de
+// amostra ficam `null` e o cliente monta a pré-visualização com um object URL local.
+const CATEGORIES: readonly ConversionCategory[] = ["spreadsheets", "data", "documents", "images"];
 // Só planilhas passam pelo `previewSpreadsheet` — pdf/json/docx têm seu próprio reader
 // e condição dedicada abaixo (não fazem parte deste conjunto).
 const SPREADSHEET_EXTENSIONS = new Set(["csv", "xlsx"]);

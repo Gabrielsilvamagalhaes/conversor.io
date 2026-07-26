@@ -29,4 +29,45 @@ describe("MagicBytesDetector", () => {
     const out = detector.detect(new Uint8Array([0x61, 0x00, 0x62]));
     expect(out.isBinary).toBe(true);
   });
+
+  it("detecta assinatura WEBP (RIFF + WEBP no offset 8)", () => {
+    const out = detector.detect(
+      new Uint8Array([
+        0x52,
+        0x49,
+        0x46,
+        0x46, // RIFF
+        0x00,
+        0x00,
+        0x00,
+        0x00, // tamanho (irrelevante para a detecção)
+        0x57,
+        0x45,
+        0x42,
+        0x50, // WEBP
+      ]),
+    );
+    expect(out.signature).toBe("webp");
+  });
+
+  it("NÃO detecta um WAV (RIFF + WAVE) como webp — RIFF sozinho não basta", () => {
+    const out = detector.detect(
+      new Uint8Array([
+        0x52,
+        0x49,
+        0x46,
+        0x46, // RIFF
+        0x00,
+        0x00,
+        0x00,
+        0x00, // tamanho
+        0x57,
+        0x41,
+        0x56,
+        0x45, // WAVE
+      ]),
+    );
+    expect(out.signature).not.toBe("webp");
+    expect(out.signature).toBeNull();
+  });
 });
