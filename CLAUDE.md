@@ -43,13 +43,17 @@ Wikimedia) como peça central, à maneira do Hermes/Nous. Mote de marca: **"Code
 | Categoria | Pares |
 | --- | --- |
 | Planilhas | `.xlsx` ↔ `.csv` |
-| Documentos | `.docx` → `.pdf` (sem LibreOffice — mammoth + pdfmake), `.pdf` → `.txt` |
+| Documentos | `.docx` → `.pdf` (sem LibreOffice — mammoth + pdfmake), `.pdf` → `.txt`, `.md` → `.pdf` (marked + pdfmake) |
 | Dados | `.json` ↔ `.csv`, `.xlsx` → `.json` |
+| Imagens | `.png` ↔ `.jpg`, `.webp` → `.png`/`.jpg`, `.png`/`.jpg` → `.webp` (sharp) |
 | Mídia | vídeo (`.mp4`/`.webm`/`.mov`) → `.mp3`/`.wav` (roda no navegador via ffmpeg.wasm) |
 
 `.xlsx → .json` foi adicionado na Fase 2, fora do escopo fechado original do MVP — ver
-`/docs/04 - Conversoes/MVP - Conversões Iniciais.md`. `.pdf → .docx` está no catálogo mas
-ainda não é `live` ("em breve").
+`/docs/04 - Conversoes/MVP - Conversões Iniciais.md`. A categoria Imagens e `.md → .pdf`
+também foram adicionadas fora desse escopo fechado, na mesma fase — ver o mesmo arquivo e
+`/docs/01 - Arquitetura/Decisão - Conversão de imagens com sharp.md`. `.jpeg` é aceito como
+grafia alternativa de `.jpg` (mesmo container, alias normalizado antes do catálogo).
+`.pdf → .docx` está no catálogo mas ainda não é `live` ("em breve").
 
 Fora do MVP: transcrição com IA, conversões em lote, API pública, planos/monetização.
 
@@ -67,8 +71,13 @@ pnpm typecheck    # tsc --noEmit
 
 Gerenciador de pacotes: **pnpm**. Node fixado em **22** (`engines.node >=22`).
 Nenhum binário externo é necessário para conversões locais: vídeo → áudio roda com
-ffmpeg.wasm no navegador (não usa `ffmpeg` do sistema) e `docx → pdf` roda em JS puro
-(mammoth + pdfmake, não usa LibreOffice/`soffice`).
+ffmpeg.wasm no navegador (não usa `ffmpeg` do sistema) e `docx → pdf`/`md → pdf` rodam em JS
+puro (mammoth/marked + pdfmake, não usa LibreOffice/`soffice`).
+
+`pnpm verify:assets` (exige `pnpm build` antes — inspeciona os arquivos emitidos em `.next/`,
+não o código-fonte) confere que as 4 variantes da fonte Roboto do `docx`/`md → pdf` foram
+emitidas como assets distintos pelo bundler — ver o postmortem em
+[[Decisão - Conversão docx para pdf sem LibreOffice]].
 
 ## Arquitetura — Clean Architecture + DDD
 
@@ -111,12 +120,17 @@ registrado no `ConverterRegistry`. Ex.: `XlsxToCsvAdapter`, `DocxToPdfAdapter`. 
 formato = adicionar um adapter, sem reescrever o core. Vídeo → áudio é exceção: roda no
 navegador (ffmpeg.wasm), não tem adapter nem entra no `ConverterRegistry`.
 
+`ImageConvertAdapter` é uma exceção parametrizada a essa regra: é **um** adapter instanciado
+6× a partir do catálogo (uma instância por par de imagem), não 6 classes, porque os 6 pares
+são a mesma operação (decode → re-encode via sharp) variando só o codec de saída — ver
+[[Decisão - Conversão de imagens com sharp]] em `/docs`.
+
 ## Estrutura de pastas (`src/`)
 
 ```
 src/
 ├── app/              # Presentation (App Router): pages, layouts, api/route handlers, middleware
-├── components/       # Presentation: componentes React · dashboard/ · dropzone/ · ui/
+├── components/       # Presentation: componentes React · dashboard/ · dropzone/ · motion/ · landing/ · ui/
 ├── domain/           # conversion/ · identity/ · observability/ (entities, value-objects, errors, ports)
 ├── application/      # use cases por contexto + services/ (converter-registry)
 ├── infrastructure/   # auth/ · conversion/ (adapters de conversão) · observability/ · persistence/ (Firestore)
@@ -128,6 +142,13 @@ src/
 `src/infrastructure/observability/` e `src/domain/observability/` guardam `LoggerPort` e
 `ConsoleJsonLogger` — ver [[Decisão - Observabilidade e Logs Estruturados]] em `/docs`.
 Ainda não existe `src/infrastructure/storage/` (Fase 3, storage de arquivo + TTL).
+
+Dentro de `src/infrastructure/conversion/`: `docx/` e `pdfmake/` guardam a fonte Roboto e o
+singleton pdfmake compartilhados por `docx → pdf` e `md → pdf`; `image/` guarda o
+`ImageConvertAdapter` (sharp); `markdown/` guarda o adapter `md → pdf` (marked). Dentro de
+`src/components/`: `motion/` guarda os primitivos de animação (`motion`, respeitando
+`prefers-reduced-motion`) e `landing/` guarda os componentes da página inicial, que lê o
+catálogo real via `GetConversionCatalogUseCase` em vez de listas hardcoded.
 
 Path alias: `@/*` → `./src/*`. **Proibido** `@/infrastructure` importado de `@/domain`.
 
@@ -168,7 +189,9 @@ Trunk-based: `main` é a única branch permanente (protegida, só via PR). Nunca
 
 ## Limites & segurança
 
-- Documentos/dados: 10 MB · Vídeo: 100 MB / 15 min. Arquivos temporários com TTL (padrão 1h).
+- Documentos/dados/imagens: **4 MB** (`DEFAULT_MAX_DOCUMENT_SIZE_MB`, abaixo do teto ~4,5 MB de body
+  da Vercel; ajustável por `MAX_DOCUMENT_SIZE_MB`) · Vídeo: 100 MB / 15 min, convertido no navegador.
+  Imagens acima do limite são reduzidas via canvas antes do upload (`src/lib/image/downscale-image.ts`).
 - Validar magic bytes (não só extensão), sanitizar nomes (sem path traversal), rejeitar executáveis disfarçados.
 - Firebase Admin SDK apenas no server. Cookie de sessão `__session` (httpOnly).
 
@@ -194,3 +217,8 @@ E2E é job separado e não-bloqueante. Em CI use `pnpm ci` (`biome ci`, não-mut
 - **Tema claro e escuro.** Todo elemento novo deve funcionar nos dois temas — usar os tokens
   (`--fg/--muted/--sanguine/--gold/--line/--bg/--bg-elev`), nunca cores fixas.
 - **Libs externas.** Sempre pedir permissão antes de adicionar uma dependência nova.
+- **`new URL(caminho, import.meta.url)` só com string literal, nunca template dinâmico**
+  (`` `${...}` ``). Turbopack e webpack só reconhecem essa chamada como referência a um asset
+  estático quando conseguem ler o caminho em tempo de build; com uma parte dinâmica, o
+  bundler não sabe qual arquivo copiar e colapsa múltiplas chamadas no mesmo asset — ver o
+  postmortem em [[Decisão - Conversão docx para pdf sem LibreOffice]].
