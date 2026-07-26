@@ -32,6 +32,7 @@ function bytesToMb(bytes: number): number {
 export function ResultPanel({ result, onDownload, onReset }: ResultPanelProps) {
   const kind = resolveResultPreviewKind(result.toExtension);
   const isDocxToPdf = result.fromExtension === "docx" && result.toExtension === "pdf";
+  const isMarkdownToPdf = result.fromExtension === "md" && result.toExtension === "pdf";
 
   return (
     <div className="space-y-5">
@@ -46,6 +47,13 @@ export function ResultPanel({ result, onDownload, onReset }: ResultPanelProps) {
         <p className="rounded-xl border border-gold/30 bg-gold/5 px-4 py-3 text-xs text-muted">
           Layout simplificado — texto, títulos, listas e tabelas são preservados; fontes e
           posicionamento originais não.
+        </p>
+      ) : null}
+
+      {isMarkdownToPdf ? (
+        <p className="rounded-xl border border-gold/30 bg-gold/5 px-4 py-3 text-xs text-muted">
+          Títulos, listas, ênfase e tabelas são preservados. Blocos de código perdem o
+          monoespaçamento e a indentação.
         </p>
       ) : null}
 
@@ -101,6 +109,8 @@ function ResultPreview({
       );
     case "audio":
       return <AudioResultPreview result={result} />;
+    case "image":
+      return <ImageResultPreview result={result} />;
     case "xlsx":
       return (
         <div className="space-y-3">
@@ -306,6 +316,50 @@ function AudioResultPreview({ result }: { result: ConversionResult }) {
           <div className="h-12 animate-pulse rounded-lg border border-line bg-bg motion-reduce:animate-none" />
         )}
       </div>
+    </div>
+  );
+}
+
+/** Prévia de saída `.png`/`.jpg`/`.webp`: os pixels convertidos, direto do Blob resultante. */
+function ImageResultPreview({ result }: { result: ConversionResult }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
+
+  // Object URL só existe enquanto este componente está montado (status "done"); ao trocar
+  // de resultado ou desmontar, é revogado aqui.
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(result.blob);
+    setUrl(objectUrl);
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [result.blob]);
+
+  return (
+    <div className="rounded-2xl border border-line bg-bg-elev p-6">
+      <ResultHeader result={result} />
+      <div className="mt-5 flex justify-center overflow-hidden rounded-xl border border-line bg-bg p-3">
+        {url ? (
+          // biome-ignore lint/performance/noImgElement: object URL local, fora do otimizador do Next
+          <img
+            src={url}
+            alt={`Resultado da conversão: ${result.fileName}`}
+            onLoad={(event) =>
+              setDimensions({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })
+            }
+            className="max-h-72 w-auto object-contain"
+          />
+        ) : (
+          <div className="h-40 w-full animate-pulse rounded-lg bg-bg-elev motion-reduce:animate-none" />
+        )}
+      </div>
+      <p className="mt-3 text-center text-xs text-muted">
+        {dimensions ? `${dimensions.width}×${dimensions.height} px · ` : ""}
+        metadados EXIF removidos na conversão
+      </p>
     </div>
   );
 }

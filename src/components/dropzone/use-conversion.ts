@@ -10,14 +10,17 @@ import {
   type AudioExtension,
   isAudioExtension,
 } from "@/domain/conversion/value-objects/accepted-format";
+import { downscaleImageToFit } from "@/lib/image/downscale-image";
 import { convertVideoToAudio } from "@/lib/media/convert-video-to-audio";
 import { validateMedia } from "@/lib/media/validate-media";
 import { isMediaError, MEDIA_ERROR_MESSAGES } from "@/shared/media/media-error";
 
+const toMb = (bytes: number): number => Number((bytes / (1024 * 1024)).toFixed(2));
+
 export type Status = "idle" | "reading" | "ready" | "converting" | "done" | "error";
 
 export interface PreviewData {
-  readonly kind: "document" | "media";
+  readonly kind: "document" | "media" | "image";
   readonly fileName: string;
   readonly extension: string;
   readonly targets: string[];
@@ -25,6 +28,9 @@ export interface PreviewData {
   /** Mídia: duração do vídeo e object URL da prévia (revogado no reset/unmount). */
   readonly durationSeconds: number | null;
   readonly videoUrl: string | null;
+  /** Imagem: object URL dos pixels e o tamanho original, se houve redução no navegador. */
+  readonly imageUrl: string | null;
+  readonly originalSizeMb: number | null;
   readonly totalRows: number | null;
   readonly columns: number | null;
   readonly previewRows: string[][] | null;
@@ -74,6 +80,8 @@ export function useConversion({ category, activeCategory }: UseConversionArgs) {
 
   // Categoria de mídia: conversão roda no navegador (ffmpeg.wasm), não em /api/convert.
   const isMediaCategory = category.pairs.some((pair) => pair.engine === "client");
+  const isImageCategory = category.id === "images";
+  const maxUploadBytes = category.maxSizeMb * 1024 * 1024;
 
   function revokeMediaUrl(): void {
     if (mediaUrlRef.current) {
@@ -119,8 +127,27 @@ export function useConversion({ category, activeCategory }: UseConversionArgs) {
       return;
     }
 
+    // Imagem grande é reduzida aqui em vez de rejeitada: o teto de upload vem do body máximo da
+    // plataforma, e foto de celular passa dele com folga — é justamente o arquivo que o usuário
+    // quer converter. As demais categorias falham cedo, sem gastar a subida.
+    let upload = file;
+    let originalSizeMb: number | null = null;
+    if (isImageCategory) {
+      const downscaled = await downscaleImageToFit(file, maxUploadBytes);
+      upload = downscaled.file;
+      if (downscaled.wasResized) originalSizeMb = toMb(downscaled.originalBytes);
+    }
+    if (upload.size > maxUploadBytes) {
+      setError(
+        `"${file.name}" tem ${toMb(file.size)} MB — o limite é ${category.maxSizeMb} MB por arquivo.`,
+      );
+      setStatus("error");
+      return;
+    }
+    fileRef.current = upload;
+
     const body = new FormData();
-    body.append("file", file);
+    body.append("file", upload);
     body.append("category", activeCategory);
     try {
       const res = await fetch("/api/preview", { method: "POST", body });
@@ -130,11 +157,18 @@ export function useConversion({ category, activeCategory }: UseConversionArgs) {
         setStatus("error");
         return;
       }
+      const imageUrl = isImageCategory ? URL.createObjectURL(upload) : null;
+      if (imageUrl) mediaUrlRef.current = imageUrl;
       const parsed: PreviewData = {
-        kind: "document",
+        kind: isImageCategory ? "image" : "document",
         durationSeconds: null,
         videoUrl: null,
-        ...(data as Omit<PreviewData, "kind" | "durationSeconds" | "videoUrl">),
+        imageUrl,
+        originalSizeMb,
+        ...(data as Omit<
+          PreviewData,
+          "kind" | "durationSeconds" | "videoUrl" | "imageUrl" | "originalSizeMb"
+        >),
       };
       setPreview(parsed);
       setTarget(parsed.targets[0] ?? null);
@@ -159,9 +193,11 @@ export function useConversion({ category, activeCategory }: UseConversionArgs) {
         fileName: file.name,
         extension: media.extension,
         targets,
-        sizeMb: Number((file.size / (1024 * 1024)).toFixed(2)),
+        sizeMb: toMb(file.size),
         durationSeconds: media.durationSeconds,
         videoUrl: media.objectUrl,
+        imageUrl: null,
+        originalSizeMb: null,
         totalRows: null,
         columns: null,
         previewRows: null,
